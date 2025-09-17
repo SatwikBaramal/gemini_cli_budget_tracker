@@ -46,10 +46,6 @@ Charts: Recharts (for expense visualization)
 
 Deployment: Vercel (easy Next.js hosting)
 
-
-
-
-
 📝 Example Usage
 
 Set yearly income
