@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PieChartComponent from './PieChartComponent'; // This component will be created next
+import { Summary } from './Summary';
 
 interface Expense {
   id: number;
@@ -9,12 +10,11 @@ interface Expense {
 }
 
 interface DashboardProps {
-  yearlyIncome: number;
+  monthlyIncome: number;
   expenses: Expense[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ yearlyIncome, expenses }) => {
-  const monthlyIncome = yearlyIncome / 12;
+const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
   const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);
   const remainingBalance = monthlyIncome - totalExpenses;
 
@@ -52,8 +52,9 @@ const Dashboard: React.FC<DashboardProps> = ({ yearlyIncome, expenses }) => {
           </CardContent>
         </Card>
       </div>
-      <div className="mt-4">
+      <div className="grid grid-cols-1 gap-4 mt-4">
         <PieChartComponent expenses={expenses} />
+        <Summary />
       </div>
     </div>
   );

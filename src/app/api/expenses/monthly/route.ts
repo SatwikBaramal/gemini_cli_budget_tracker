@@ -6,7 +6,7 @@ initDb();
 
 export async function GET() {
   const db = await getDb();
-  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'yearly'");
+  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'monthly'");
   return NextResponse.json(expenses);
 }
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const { name, amount } = await request.json();
   const db = await getDb();
   const result = await db.run(
-    "INSERT INTO expenses (name, amount, type) VALUES (?, ?, 'yearly')",
+    "INSERT INTO expenses (name, amount, type) VALUES (?, ?, 'monthly')",
     name,
     amount
   );

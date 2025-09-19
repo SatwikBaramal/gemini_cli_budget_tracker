@@ -17,18 +17,18 @@ interface Expense {
 
 type SortKey = 'name' | 'amount';
 
-export default function Home() {
-  const [yearlyIncome, setYearlyIncome] = useState(0);
+export default function Monthly() {
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
 
   useEffect(() => {
     const fetchData = async () => {
-      const incomeRes = await fetch('/api/income');
+      const incomeRes = await fetch('/api/income/monthly');
       const incomeData = await incomeRes.json();
-      setYearlyIncome(Number(incomeData.value));
+      setMonthlyIncome(Number(incomeData.value));
 
-      const expensesRes = await fetch('/api/expenses');
+      const expensesRes = await fetch('/api/expenses/monthly');
       const expensesData = await expensesRes.json();
       setExpenses(expensesData);
     };
@@ -59,9 +59,9 @@ export default function Home() {
     setSortConfig({ key, direction });
   };
 
-  const updateYearlyIncome = async (income: number) => {
-    setYearlyIncome(income);
-    await fetch('/api/income', {
+  const updateMonthlyIncome = async (income: number) => {
+    setMonthlyIncome(income);
+    await fetch('/api/income/monthly', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export default function Home() {
   };
 
   const addExpense = async (expense: { name: string; amount: number }) => {
-    const response = await fetch('/api/expenses', {
+    const response = await fetch('/api/expenses/monthly', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export default function Home() {
   };
 
   const deleteExpense = async (id: number) => {
-    await fetch(`/api/expenses/${id}`, {
+    await fetch(`/api/expenses/monthly/${id}`, {
       method: 'DELETE',
     });
     setExpenses(expenses.filter((expense) => expense.id !== id));
@@ -96,12 +96,12 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-gray-200 rounded-md">
-              <h2 className="text-lg font-medium text-center">Yearly</h2>
-              <Link href="/monthly">
-                <Button>Track Monthly</Button>
+              <h2 className="text-lg font-medium text-center">Monthly</h2>
+              <Link href="/">
+                <Button>Track Yearly</Button>
               </Link>
             </div>
-            <IncomeInput label="Yearly Income (INR)" value={yearlyIncome} onChange={updateYearlyIncome} />
+            <IncomeInput label="Monthly Income (INR)" value={monthlyIncome} onChange={updateMonthlyIncome} />
             <ExpenseForm addExpense={addExpense} />
             <ExpenseList
               expenses={sortedExpenses}
@@ -111,7 +111,7 @@ export default function Home() {
             />
           </div>
           <div className="space-y-4">
-            <Dashboard monthlyIncome={yearlyIncome / 12} expenses={expenses} />
+            <Dashboard monthlyIncome={monthlyIncome} expenses={expenses} />
           </div>
         </div>
       </div>

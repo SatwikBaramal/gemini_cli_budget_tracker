@@ -19,7 +19,8 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
-      amount REAL NOT NULL
+      amount REAL NOT NULL,
+      type TEXT NOT NULL DEFAULT 'yearly'
     )
   `);
 
@@ -29,4 +30,10 @@ export async function initDb() {
       value TEXT
     )
   `);
+
+  // Add the type column to the expenses table if it doesn't exist
+  const columns = await db.all("PRAGMA table_info(expenses)");
+  if (!columns.some((column) => column.name === "type")) {
+    await db.exec("ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT 'yearly'");
+  }
 }
