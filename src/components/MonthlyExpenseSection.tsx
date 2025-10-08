@@ -121,7 +121,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
       {(expenses.length > 0 || fixedExpenses.length > 0) ? (
         <div className="space-y-2">
           <h4 className="font-semibold text-sm text-gray-700">Expenses:</h4>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-1.5 max-h-[70vh] overflow-y-auto">
             {/* Fixed Expenses */}
             {fixedExpenses.map((expense) => {
               const override = expense.overrides?.find(o => o.month === monthNumber);
@@ -129,7 +129,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
               const isEditing = editingExpenseId === expense.id;
               
               return (
-                <Card key={`fixed-${expense.id}`} className="p-3 bg-blue-50 border-l-4 border-blue-500">
+                <Card key={`fixed-${expense.id}`} className="p-2 bg-blue-50 border-l-4 border-blue-500">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -247,7 +247,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
 
             {/* Regular Expenses */}
             {expenses.map((expense) => (
-              <Card key={expense.id} className="p-3 bg-white border border-gray-200">
+              <Card key={expense.id} className="p-2 bg-white border border-gray-200">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex justify-between items-center">

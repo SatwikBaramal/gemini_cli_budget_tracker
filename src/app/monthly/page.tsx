@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import MonthlyExpenseSection from '@/components/MonthlyExpenseSection';
 import FixedExpensesManager from '@/components/FixedExpensesManager';
+import MonthNavigationGrid from '@/components/MonthNavigationGrid';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { Pencil } from 'lucide-react';
 
@@ -55,6 +56,8 @@ export default function Monthly() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [incomeInput, setIncomeInput] = useState('');
   const [expenseToEdit, setExpenseToEdit] = useState<FixedExpense | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1); // Current month (1-12)
+  const [viewMode, setViewMode] = useState<'current' | 'all'>('current');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -303,61 +306,139 @@ export default function Monthly() {
           </div>
         </div>
 
-        {/* Fixed Expenses Manager */}
-        <div id="fixed-expenses-manager">
-          <FixedExpensesManager
-            fixedExpenses={fixedExpenses}
-            onAdd={handleAddFixedExpense}
-            onUpdate={handleUpdateFixedExpense}
-            onDelete={handleDeleteFixedExpense}
-            expenseToEdit={expenseToEdit}
-            onEditComplete={() => setExpenseToEdit(null)}
-          />
-        </div>
+        {/* Conditional Rendering based on View Mode */}
+        {viewMode === 'current' ? (
+          <>
+            {/* Current Month Expenses - Prominent Display */}
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {getMonthName(selectedMonth)} Expenses
+                </h2>
+                <div className="text-sm text-gray-600">
+                  Spent: <span className="font-semibold text-red-600">{formatCurrency(getTotalSpentForMonth(selectedMonth))}</span>
+                  {' | '}
+                  Remaining: <span className={`font-semibold ${(monthlyIncome - getTotalSpentForMonth(selectedMonth)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(monthlyIncome - getTotalSpentForMonth(selectedMonth))}
+                  </span>
+                </div>
+              </div>
+              
+              <MonthlyExpenseSection
+                monthNumber={selectedMonth}
+                monthName={getMonthName(selectedMonth)}
+                monthlyIncome={monthlyIncome}
+                expenses={expensesByMonth[selectedMonth] || []}
+                fixedExpenses={getFixedExpensesForMonth(selectedMonth)}
+                onAddExpense={addExpense}
+                onDeleteExpense={deleteExpense}
+                onUnapplyFixedExpense={handleUnapplyFixedExpense}
+                onOverrideFixedExpense={handleOverrideFixedExpense}
+                onRevertOverride={handleRevertOverride}
+              />
+            </div>
 
-        {/* Monthly Accordions */}
-        <div className="bg-white rounded-lg shadow">
-          <Accordion type="single" collapsible className="w-full">
-            {MONTHS.map((monthNumber) => {
-              const monthName = getMonthName(monthNumber);
-              const expenses = expensesByMonth[monthNumber] || [];
-              const totalSpent = getTotalSpentForMonth(monthNumber);
-              const remaining = monthlyIncome - totalSpent;
+            {/* Fixed Expenses Manager */}
+            <div id="fixed-expenses-manager">
+              <FixedExpensesManager
+                fixedExpenses={fixedExpenses}
+                onAdd={handleAddFixedExpense}
+                onUpdate={handleUpdateFixedExpense}
+                onDelete={handleDeleteFixedExpense}
+                expenseToEdit={expenseToEdit}
+                onEditComplete={() => setExpenseToEdit(null)}
+              />
+            </div>
 
-              return (
-                <AccordionItem key={monthNumber} value={`month-${monthNumber}`}>
-                  <AccordionTrigger className="px-6 hover:bg-gray-50">
-                    <div className="flex justify-between items-center w-full pr-4">
-                      <span className="font-semibold text-lg">{monthName}</span>
-                      <div className="flex gap-4 text-sm">
-                        <span className="text-gray-600">
-                          Spent: <span className="font-semibold text-red-600">{formatCurrency(totalSpent)}</span>
-                        </span>
-                        <span className="text-gray-600">
-                          Remaining: <span className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(remaining)}</span>
-                        </span>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <MonthlyExpenseSection
-                      monthNumber={monthNumber}
-                      monthName={monthName}
-                      monthlyIncome={monthlyIncome}
-                      expenses={expenses}
-                      fixedExpenses={getFixedExpensesForMonth(monthNumber)}
-                      onAddExpense={addExpense}
-                      onDeleteExpense={deleteExpense}
-                      onUnapplyFixedExpense={handleUnapplyFixedExpense}
-                      onOverrideFixedExpense={handleOverrideFixedExpense}
-                      onRevertOverride={handleRevertOverride}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </div>
+            {/* Month Navigation Grid */}
+            <MonthNavigationGrid
+              months={MONTHS}
+              selectedMonth={selectedMonth}
+              onMonthSelect={setSelectedMonth}
+              getMonthData={(month) => ({
+                name: getMonthName(month),
+                spent: getTotalSpentForMonth(month),
+                remaining: monthlyIncome - getTotalSpentForMonth(month)
+              })}
+            />
+
+            {/* Toggle Button to All Months View */}
+            <div className="flex justify-center mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setViewMode('all')}
+              >
+                View All Months (Accordion)
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* All Months View */}
+            <div className="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow">
+              <h2 className="text-xl font-bold">All Months</h2>
+              <Button onClick={() => setViewMode('current')}>
+                Back to Current Month View
+              </Button>
+            </div>
+
+            {/* Fixed Expenses Manager */}
+            <div id="fixed-expenses-manager">
+              <FixedExpensesManager
+                fixedExpenses={fixedExpenses}
+                onAdd={handleAddFixedExpense}
+                onUpdate={handleUpdateFixedExpense}
+                onDelete={handleDeleteFixedExpense}
+                expenseToEdit={expenseToEdit}
+                onEditComplete={() => setExpenseToEdit(null)}
+              />
+            </div>
+
+            {/* Monthly Accordions */}
+            <div className="bg-white rounded-lg shadow">
+              <Accordion type="single" collapsible className="w-full">
+                {MONTHS.map((monthNumber) => {
+                  const monthName = getMonthName(monthNumber);
+                  const expenses = expensesByMonth[monthNumber] || [];
+                  const totalSpent = getTotalSpentForMonth(monthNumber);
+                  const remaining = monthlyIncome - totalSpent;
+
+                  return (
+                    <AccordionItem key={monthNumber} value={`month-${monthNumber}`}>
+                      <AccordionTrigger className="px-6 hover:bg-gray-50">
+                        <div className="flex justify-between items-center w-full pr-4">
+                          <span className="font-semibold text-lg">{monthName}</span>
+                          <div className="flex gap-4 text-sm">
+                            <span className="text-gray-600">
+                              Spent: <span className="font-semibold text-red-600">{formatCurrency(totalSpent)}</span>
+                            </span>
+                            <span className="text-gray-600">
+                              Remaining: <span className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(remaining)}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <MonthlyExpenseSection
+                          monthNumber={monthNumber}
+                          monthName={monthName}
+                          monthlyIncome={monthlyIncome}
+                          expenses={expenses}
+                          fixedExpenses={getFixedExpensesForMonth(monthNumber)}
+                          onAddExpense={addExpense}
+                          onDeleteExpense={deleteExpense}
+                          onUnapplyFixedExpense={handleUnapplyFixedExpense}
+                          onOverrideFixedExpense={handleOverrideFixedExpense}
+                          onRevertOverride={handleRevertOverride}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

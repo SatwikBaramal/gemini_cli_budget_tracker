@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDb } from '@/lib/db';
 
-// Initialize the database
-initDb();
-
 export async function GET() {
+  await initDb();
   const db = await getDb();
   const result = await db.get("SELECT value FROM settings WHERE key = 'yearlyIncome'");
-  return NextResponse.json(result || { value: 0 });
+  
+  return NextResponse.json(result || { value: 0 }, {
+    headers: {
+      'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
+    }
+  });
 }
 
 export async function POST(request: Request) {
+  await initDb();
   const { income } = await request.json();
   const db = await getDb();
   await db.run(

@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 
 let db: Database | null = null;
+let initialized = false;
 
 export async function getDb() {
   if (!db) {
@@ -14,7 +15,14 @@ export async function getDb() {
 }
 
 export async function initDb() {
+  // Return early if already initialized
+  if (initialized) {
+    return getDb();
+  }
+
   const db = await getDb();
+  
+  // Create tables
   await db.exec(`
     CREATE TABLE IF NOT EXISTS expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,19 +61,36 @@ export async function initDb() {
     )
   `);
 
-  // Add the type column to the expenses table if it doesn't exist
+  // Add missing columns (only checked once during initialization)
   const columns = await db.all("PRAGMA table_info(expenses)");
   if (!columns.some((column) => column.name === "type")) {
     await db.exec("ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT 'yearly'");
   }
   
-  // Add the month column to the expenses table if it doesn't exist
   if (!columns.some((column) => column.name === "month")) {
     await db.exec("ALTER TABLE expenses ADD COLUMN month INTEGER");
   }
   
-  // Add the date column to the expenses table if it doesn't exist
   if (!columns.some((column) => column.name === "date")) {
     await db.exec("ALTER TABLE expenses ADD COLUMN date TEXT");
   }
+
+  // Create indexes for better query performance
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_expenses_month ON expenses(month);
+  `);
+  
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type);
+  `);
+  
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_fixed_overrides_lookup 
+    ON fixed_expense_overrides(fixed_expense_id, month);
+  `);
+
+  // Mark as initialized
+  initialized = true;
+  
+  return db;
 }

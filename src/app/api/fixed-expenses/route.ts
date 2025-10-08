@@ -20,7 +20,11 @@ export async function GET() {
       };
     });
     
-    return NextResponse.json(parsed);
+    return NextResponse.json(parsed, {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=120'
+      }
+    });
   } catch (error) {
     console.error('Error fetching fixed expenses:', error);
     // Return empty array if table doesn't exist yet or other error
