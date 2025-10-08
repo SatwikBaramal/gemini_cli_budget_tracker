@@ -28,15 +28,23 @@ export default function Home() {
       const incomeData = await incomeRes.json();
       setYearlyIncome(Number(incomeData.value));
 
-      const expensesRes = await fetch('/api/expenses');
-      const expensesData = await expensesRes.json();
-      setExpenses(expensesData);
+      // Fetch both yearly and monthly expenses
+      const [yearlyRes, monthlyRes] = await Promise.all([
+        fetch('/api/expenses'),
+        fetch('/api/expenses/monthly')
+      ]);
+      
+      const yearlyExpenses = await yearlyRes.json();
+      const monthlyExpenses = await monthlyRes.json();
+      
+      // Combine all expenses for display
+      setExpenses([...yearlyExpenses, ...monthlyExpenses]);
     };
     fetchData();
   }, []);
 
   const sortedExpenses = useMemo(() => {
-    let sortableExpenses = [...expenses];
+    const sortableExpenses = [...expenses];
     if (sortConfig !== null) {
       sortableExpenses.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {

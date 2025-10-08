@@ -6,17 +6,7 @@ initDb();
 
 export async function GET() {
   const db = await getDb();
-  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'monthly'");
+  // Get all monthly expenses across all months
+  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'monthly' ORDER BY month, date DESC");
   return NextResponse.json(expenses);
-}
-
-export async function POST(request: Request) {
-  const { name, amount } = await request.json();
-  const db = await getDb();
-  const result = await db.run(
-    "INSERT INTO expenses (name, amount, type) VALUES (?, ?, 'monthly')",
-    name,
-    amount
-  );
-  return NextResponse.json({ id: result.lastID, name, amount });
 }

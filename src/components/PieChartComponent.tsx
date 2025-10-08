@@ -14,6 +14,7 @@ interface PieChartComponentProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF4560'];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any) => {
     const { x, y, textAnchor, dominantBaseline, name, percent, fill } = props;
     return (

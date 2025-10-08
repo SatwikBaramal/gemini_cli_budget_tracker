@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       db.get("SELECT value FROM settings WHERE key = 'yearlyIncome'"),
       db.get("SELECT value FROM settings WHERE key = 'monthlyIncome'"),
       db.all("SELECT * FROM expenses WHERE type = 'yearly'"),
-      db.all("SELECT * FROM expenses WHERE type = 'monthly'"),
+      db.all("SELECT * FROM expenses WHERE type = 'monthly' ORDER BY month, date DESC"),
     ]);
 
     const yearlyIncome = Number(yearlyIncomeRes?.value) || 0;
@@ -29,17 +29,44 @@ export async function POST(req: NextRequest) {
     const totalYearlyExpenses = yearlyExpenses.reduce((acc, e) => acc + e.amount, 0);
     const totalMonthlyExpenses = monthlyExpenses.reduce((acc, e) => acc + e.amount, 0);
     const yearlyExpenseDetails = yearlyExpenses.map(e => `- ${e.name}: ₹${e.amount.toFixed(2)}`).join('\n');
-    const monthlyExpenseDetails = monthlyExpenses.map(e => `- ${e.name}: ₹${e.amount.toFixed(2)}`).join('\n');
+    
+    // Group monthly expenses by month and format them
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const expensesByMonth: { [key: number]: typeof monthlyExpenses } = {};
+    monthlyExpenses.forEach(exp => {
+      if (!expensesByMonth[exp.month]) {
+        expensesByMonth[exp.month] = [];
+      }
+      expensesByMonth[exp.month].push(exp);
+    });
+    
+    let monthlyExpenseDetails = '';
+    Object.keys(expensesByMonth).sort((a, b) => Number(a) - Number(b)).forEach(monthNum => {
+      const month = Number(monthNum);
+      const expenses = expensesByMonth[month];
+      const monthTotal = expenses.reduce((acc, e) => acc + e.amount, 0);
+      monthlyExpenseDetails += `\n${monthNames[month - 1]}:\n`;
+      expenses.forEach(e => {
+        monthlyExpenseDetails += `  - ${e.name}: ₹${e.amount.toFixed(2)}\n`;
+      });
+      monthlyExpenseDetails += `  Total for ${monthNames[month - 1]}: ₹${monthTotal.toFixed(2)}\n`;
+    });
+    
+    if (!monthlyExpenseDetails) {
+      monthlyExpenseDetails = 'No monthly expenses recorded.';
+    }
 
     const systemPrompt = `
       You are a helpful and friendly financial assistant for a personal budgeting application.
       Your name is "FinBot".
       You must answer questions based ONLY on the provided financial data and general financial knowledge about budgeting.
-      You can perform calculations on the provided data if the user asks (e.g., "what is my total spending on food?").
+      You can perform calculations on the provided data if the user asks (e.g., "what is my total spending on food?", "which month did I spend the most?").
       If a question is outside this scope (e.g., celebrity news, weather), you must politely decline to answer and state that you can only help with financial questions.
       Keep your answers concise and to the point.
       Feel free to be a little creative with the user's finances, but do not make up any data.
       You have the ability to split the expenses into categories based on common knowledge (e.g., groceries, utilities, entertainment) if the user asks for category-wise breakdowns.
+      The user can track expenses both yearly and month-by-month (January through December).
 
       Here is the user's current financial data for your context:
       --- Yearly Data ---
@@ -50,9 +77,9 @@ export async function POST(req: NextRequest) {
 
       --- Monthly Data ---
       Monthly Income: ₹${monthlyIncome.toFixed(2)}
-      Total Monthly Expenses: ₹${totalMonthlyExpenses.toFixed(2)}
-      Monthly Expenses Breakdown:
-      ${monthlyExpenseDetails || 'No monthly expenses recorded.'}
+      Total Monthly Expenses (across all months): ₹${totalMonthlyExpenses.toFixed(2)}
+      Monthly Expenses Breakdown (by month):
+      ${monthlyExpenseDetails}
     `;
 
     if (!token) {
