@@ -24,7 +24,7 @@ import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { Pencil } from 'lucide-react';
 
 interface Expense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   date: string;
@@ -33,15 +33,15 @@ interface Expense {
 }
 
 interface FixedExpenseOverride {
-  id: number;
-  fixed_expense_id: number;
+  id: string;
+  fixed_expense_id: string;
   month: number;
   override_amount: number;
   date: string;
 }
 
 interface FixedExpense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   applicable_months: number[];
@@ -102,7 +102,7 @@ export default function Monthly() {
     }));
   };
 
-  const deleteExpense = async (monthNumber: number, id: number) => {
+  const deleteExpense = async (monthNumber: number, id: string) => {
     await fetch(`/api/expenses/monthly/${monthNumber}/${id}`, {
       method: 'DELETE',
     });
@@ -252,10 +252,10 @@ export default function Monthly() {
               Track expenses for each month separately
             </p>
           </div>
-          <Link href="/">
-            <Button>Track Yearly</Button>
-          </Link>
-        </div>
+              <Link href="/">
+                <Button>Track Yearly</Button>
+              </Link>
+            </div>
 
         {/* Income Display */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -292,8 +292,8 @@ export default function Monthly() {
                         value={incomeInput}
                         onChange={(e) => setIncomeInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSaveIncome()}
-                      />
-                    </div>
+            />
+          </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

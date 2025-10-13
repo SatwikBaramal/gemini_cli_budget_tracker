@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Setting } from '@/lib/models/Setting';
+import { Expense } from '@/lib/models/Expense';
 import OpenAI from 'openai';
 
 const token = process.env.GITHUB_TOKEN;
@@ -14,31 +16,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
     }
 
-    const db = await getDb();
+    await connectToDatabase();
 
     // Fetch all data in parallel to provide context to the chatbot
     const [yearlyIncomeRes, monthlyIncomeRes, yearlyExpenses, monthlyExpenses] = await Promise.all([
-      db.get("SELECT value FROM settings WHERE key = 'yearlyIncome'"),
-      db.get("SELECT value FROM settings WHERE key = 'monthlyIncome'"),
-      db.all("SELECT * FROM expenses WHERE type = 'yearly'"),
-      db.all("SELECT * FROM expenses WHERE type = 'monthly' ORDER BY month, date DESC"),
+      Setting.findOne({ key: 'yearlyIncome' }).lean(),
+      Setting.findOne({ key: 'monthlyIncome' }).lean(),
+      Expense.find({ type: 'yearly' }).lean(),
+      Expense.find({ type: 'monthly' }).sort({ month: 1, date: -1 }).lean(),
     ]);
 
     const yearlyIncome = Number(yearlyIncomeRes?.value) || 0;
     const monthlyIncome = Number(monthlyIncomeRes?.value) || 0;
-    const totalYearlyExpenses = yearlyExpenses.reduce((acc, e) => acc + e.amount, 0);
-    const totalMonthlyExpenses = monthlyExpenses.reduce((acc, e) => acc + e.amount, 0);
-    const yearlyExpenseDetails = yearlyExpenses.map(e => `- ${e.name}: ₹${e.amount.toFixed(2)}`).join('\n');
+    const totalYearlyExpenses = yearlyExpenses.reduce((acc: number, e) => acc + e.amount, 0);
+    const totalMonthlyExpenses = monthlyExpenses.reduce((acc: number, e) => acc + e.amount, 0);
+    const yearlyExpenseDetails = yearlyExpenses.map((e) => `- ${e.name}: ₹${e.amount.toFixed(2)}`).join('\n');
     
     // Group monthly expenses by month and format them
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                         'July', 'August', 'September', 'October', 'November', 'December'];
     const expensesByMonth: { [key: number]: typeof monthlyExpenses } = {};
     monthlyExpenses.forEach(exp => {
-      if (!expensesByMonth[exp.month]) {
-        expensesByMonth[exp.month] = [];
+      if (exp.month) {
+        if (!expensesByMonth[exp.month]) {
+          expensesByMonth[exp.month] = [];
+        }
+        expensesByMonth[exp.month].push(exp);
       }
-      expensesByMonth[exp.month].push(exp);
     });
     
     let monthlyExpenseDetails = '';

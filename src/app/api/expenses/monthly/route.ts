@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Expense } from '@/lib/models/Expense';
 
 export async function GET() {
-  await initDb();
-  const db = await getDb();
+  await connectToDatabase();
   // Get all monthly expenses across all months
-  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'monthly' ORDER BY month, date DESC");
+  const expenses = await Expense.find({ type: 'monthly' })
+    .sort({ month: 1, date: -1 })
+    .lean();
   
-  return NextResponse.json(expenses, {
+  // Map _id to id for frontend compatibility
+  const mappedExpenses = expenses.map((expense) => ({
+    id: expense._id.toString(),
+    name: expense.name,
+    amount: expense.amount,
+    type: expense.type,
+    month: expense.month,
+    date: expense.date
+  }));
+  
+  return NextResponse.json(mappedExpenses, {
     headers: {
       'Cache-Control': 'private, max-age=10, stale-while-revalidate=60'
     }

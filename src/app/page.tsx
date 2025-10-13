@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 interface Expense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
 }

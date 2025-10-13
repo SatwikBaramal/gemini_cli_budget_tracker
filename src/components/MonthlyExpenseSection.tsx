@@ -9,7 +9,7 @@ import { Trash2, Pencil, Pin, X } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 
 interface Expense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   date: string;
@@ -17,15 +17,15 @@ interface Expense {
 }
 
 interface FixedExpenseOverride {
-  id: number;
-  fixed_expense_id: number;
+  id: string;
+  fixed_expense_id: string;
   month: number;
   override_amount: number;
   date: string;
 }
 
 interface FixedExpense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   applicable_months: number[];
@@ -39,10 +39,10 @@ interface MonthlyExpenseSectionProps {
   expenses: Expense[];
   fixedExpenses: FixedExpense[];
   onAddExpense: (monthNumber: number, expense: { name: string; amount: number }) => void;
-  onDeleteExpense: (monthNumber: number, id: number) => void;
-  onUnapplyFixedExpense: (fixedExpenseId: number, monthNumber: number) => void;
-  onOverrideFixedExpense: (fixedExpenseId: number, month: number, overrideAmount: number) => void;
-  onRevertOverride: (overrideId: number) => void;
+  onDeleteExpense: (monthNumber: number, id: string) => void;
+  onUnapplyFixedExpense: (fixedExpenseId: string, monthNumber: number) => void;
+  onOverrideFixedExpense: (fixedExpenseId: string, month: number, overrideAmount: number) => void;
+  onRevertOverride: (overrideId: string) => void;
 }
 
 const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
@@ -58,7 +58,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');
-  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
 
   // Calculate total including fixed expenses with overrides

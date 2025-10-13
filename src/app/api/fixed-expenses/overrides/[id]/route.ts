@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await initDb();
+    await connectToDatabase();
     const { id } = await params;
     
-    const db = await getDb();
-    await db.run('DELETE FROM fixed_expense_overrides WHERE id = ?', id);
+    await FixedExpenseOverride.findByIdAndDelete(id);
     
     return NextResponse.json({ success: true });
   } catch (error) {

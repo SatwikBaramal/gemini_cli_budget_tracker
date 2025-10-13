@@ -21,14 +21,14 @@ import {
 import { ArrowUpDown } from 'lucide-react';
 
 interface Expense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
 }
 
 interface ExpenseListProps {
   expenses: Expense[];
-  deleteExpense: (id: number) => void;
+  deleteExpense: (id: string) => void;
   requestSort: (key: 'name' | 'amount') => void;
   sortConfig: { key: 'name' | 'amount'; direction: 'ascending' | 'descending' } | null;
 }
@@ -82,7 +82,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, deleteExpense, requ
             </TableRow>
           ))
         ) : (
-          <TableRow>
+          <TableRow key="empty">
             <TableCell colSpan={3} className="text-center">
               No expenses added yet.
             </TableCell>

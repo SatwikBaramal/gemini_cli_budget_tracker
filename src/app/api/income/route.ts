@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Setting } from '@/lib/models/Setting';
 
 export async function GET() {
-  await initDb();
-  const db = await getDb();
-  const result = await db.get("SELECT value FROM settings WHERE key = 'yearlyIncome'");
+  await connectToDatabase();
+  const result = await Setting.findOne({ key: 'yearlyIncome' });
   
-  return NextResponse.json(result || { value: 0 }, {
+  return NextResponse.json(result ? { value: result.value } : { value: '0' }, {
     headers: {
       'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
     }
@@ -14,12 +14,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  await initDb();
+  await connectToDatabase();
   const { income } = await request.json();
-  const db = await getDb();
-  await db.run(
-    "INSERT OR REPLACE INTO settings (key, value) VALUES ('yearlyIncome', ?)",
-    income
+  await Setting.findOneAndUpdate(
+    { key: 'yearlyIncome' },
+    { value: income.toString() },
+    { upsert: true, new: true }
   );
   return NextResponse.json({ income });
 }

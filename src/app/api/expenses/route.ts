@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Expense } from '@/lib/models/Expense';
 
 export async function GET() {
-  await initDb();
-  const db = await getDb();
-  const expenses = await db.all("SELECT * FROM expenses WHERE type = 'yearly'");
+  await connectToDatabase();
+  const expenses = await Expense.find({ type: 'yearly' }).lean();
   
-  return NextResponse.json(expenses, {
+  // Map _id to id for frontend compatibility
+  const mappedExpenses = expenses.map((expense) => ({
+    id: expense._id.toString(),
+    name: expense.name,
+    amount: expense.amount,
+    type: expense.type
+  }));
+  
+  return NextResponse.json(mappedExpenses, {
     headers: {
       'Cache-Control': 'private, max-age=10, stale-while-revalidate=60'
     }
@@ -14,13 +22,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  await initDb();
+  await connectToDatabase();
   const { name, amount } = await request.json();
-  const db = await getDb();
-  const result = await db.run(
-    "INSERT INTO expenses (name, amount, type) VALUES (?, ?, 'yearly')",
+  const expense = await Expense.create({
     name,
-    amount
-  );
-  return NextResponse.json({ id: result.lastID, name, amount });
+    amount,
+    type: 'yearly'
+  });
+  return NextResponse.json({ id: expense._id.toString(), name, amount });
 }

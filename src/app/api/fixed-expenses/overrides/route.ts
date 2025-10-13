@@ -1,31 +1,27 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function POST(request: Request) {
   try {
-    await initDb();
+    await connectToDatabase();
     const { fixed_expense_id, month, override_amount } = await request.json();
     const date = new Date().toISOString();
     
-    const db = await getDb();
-    
     // Check if override already exists for this fixed expense and month
-    const existing = await db.get(
-      'SELECT id FROM fixed_expense_overrides WHERE fixed_expense_id = ? AND month = ?',
-      fixed_expense_id,
+    const existing = await FixedExpenseOverride.findOne({
+      fixedExpenseId: fixed_expense_id,
       month
-    );
+    });
     
     if (existing) {
       // Update existing override
-      await db.run(
-        'UPDATE fixed_expense_overrides SET override_amount = ?, date = ? WHERE id = ?',
-        override_amount,
-        date,
-        existing.id
-      );
+      existing.overrideAmount = override_amount;
+      existing.date = date;
+      await existing.save();
+      
       return NextResponse.json({ 
-        id: existing.id, 
+        id: existing._id, 
         fixed_expense_id, 
         month, 
         override_amount, 
@@ -33,15 +29,15 @@ export async function POST(request: Request) {
       });
     } else {
       // Create new override
-      const result = await db.run(
-        'INSERT INTO fixed_expense_overrides (fixed_expense_id, month, override_amount, date) VALUES (?, ?, ?, ?)',
-        fixed_expense_id,
+      const override = await FixedExpenseOverride.create({
+        fixedExpenseId: fixed_expense_id,
         month,
-        override_amount,
+        overrideAmount: override_amount,
         date
-      );
+      });
+      
       return NextResponse.json({ 
-        id: result.lastID, 
+        id: override._id, 
         fixed_expense_id, 
         month, 
         override_amount, 

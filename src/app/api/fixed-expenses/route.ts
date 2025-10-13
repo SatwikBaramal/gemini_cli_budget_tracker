@@ -1,22 +1,33 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { FixedExpense } from '@/lib/models/FixedExpense';
+import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function GET() {
   try {
-    await initDb();
-    const db = await getDb();
-    const fixedExpenses = await db.all('SELECT * FROM fixed_expenses');
+    await connectToDatabase();
+    const fixedExpenses = await FixedExpense.find().lean();
     
     // Fetch all overrides
-    const allOverrides = await db.all('SELECT * FROM fixed_expense_overrides');
+    const allOverrides = await FixedExpenseOverride.find().lean();
     
-    // Parse the JSON string for applicable_months and attach overrides
+    // Attach overrides to each fixed expense
     const parsed = fixedExpenses.map(expense => {
-      const overrides = allOverrides.filter(o => o.fixed_expense_id === expense.id);
+      const overrides = allOverrides.filter(o => 
+        o.fixedExpenseId.toString() === expense._id.toString()
+      );
       return {
-        ...expense,
-        applicable_months: JSON.parse(expense.applicable_months),
-        overrides: overrides
+        id: expense._id,
+        name: expense.name,
+        amount: expense.amount,
+        applicable_months: expense.applicableMonths,
+        overrides: overrides.map(o => ({
+          id: o._id,
+          fixed_expense_id: o.fixedExpenseId,
+          month: o.month,
+          override_amount: o.overrideAmount,
+          date: o.date
+        }))
       };
     });
     
@@ -27,26 +38,23 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching fixed expenses:', error);
-    // Return empty array if table doesn't exist yet or other error
     return NextResponse.json([]);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    await initDb();
+    await connectToDatabase();
     const { name, amount, applicable_months } = await request.json();
     
-    const db = await getDb();
-    const result = await db.run(
-      'INSERT INTO fixed_expenses (name, amount, applicable_months) VALUES (?, ?, ?)',
+    const fixedExpense = await FixedExpense.create({
       name,
       amount,
-      JSON.stringify(applicable_months)
-    );
+      applicableMonths: applicable_months
+    });
     
     return NextResponse.json({ 
-      id: result.lastID, 
+      id: fixedExpense._id, 
       name, 
       amount, 
       applicable_months 

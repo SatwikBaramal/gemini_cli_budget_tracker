@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getDb, initDb } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { FixedExpense } from '@/lib/models/FixedExpense';
+import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await initDb();
+    await connectToDatabase();
     const { id } = await params;
     const { name, amount, applicable_months } = await request.json();
     
-    const db = await getDb();
-    await db.run(
-      'UPDATE fixed_expenses SET name = ?, amount = ?, applicable_months = ? WHERE id = ?',
+    await FixedExpense.findByIdAndUpdate(id, {
       name,
       amount,
-      JSON.stringify(applicable_months),
-      id
-    );
+      applicableMonths: applicable_months
+    });
     
     return NextResponse.json({ 
-      id: parseInt(id), 
+      id, 
       name, 
       amount, 
       applicable_months 
@@ -36,11 +35,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await initDb();
+    await connectToDatabase();
     const { id } = await params;
     
-    const db = await getDb();
-    await db.run('DELETE FROM fixed_expenses WHERE id = ?', id);
+    // Delete the fixed expense
+    await FixedExpense.findByIdAndDelete(id);
+    
+    // Delete all related overrides
+    await FixedExpenseOverride.deleteMany({ fixedExpenseId: id });
     
     return NextResponse.json({ success: true });
   } catch (error) {
