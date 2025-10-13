@@ -4,7 +4,7 @@ import PieChartComponent from './PieChartComponent'; // This component will be c
 import { Summary } from './Summary';
 
 interface Expense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
 }

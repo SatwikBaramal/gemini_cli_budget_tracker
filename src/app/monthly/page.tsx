@@ -163,7 +163,7 @@ export default function Monthly() {
     setFixedExpenses([...fixedExpenses, newFixedExpense]);
   };
 
-  const handleUpdateFixedExpense = async (id: number, expense: { name: string; amount: number; applicable_months: number[] }) => {
+  const handleUpdateFixedExpense = async (id: string, expense: { name: string; amount: number; applicable_months: number[] }) => {
     const response = await fetch(`/api/fixed-expenses/${id}`, {
       method: 'PUT',
       headers: {
@@ -175,14 +175,14 @@ export default function Monthly() {
     setFixedExpenses(fixedExpenses.map(fe => fe.id === id ? updatedExpense : fe));
   };
 
-  const handleDeleteFixedExpense = async (id: number) => {
+  const handleDeleteFixedExpense = async (id: string) => {
     await fetch(`/api/fixed-expenses/${id}`, {
       method: 'DELETE',
     });
     setFixedExpenses(fixedExpenses.filter(fe => fe.id !== id));
   };
 
-  const handleUnapplyFixedExpense = async (fixedExpenseId: number, monthNumber: number) => {
+  const handleUnapplyFixedExpense = async (fixedExpenseId: string, monthNumber: number) => {
     const fixedExpense = fixedExpenses.find(fe => fe.id === fixedExpenseId);
     if (!fixedExpense) return;
 
@@ -200,7 +200,7 @@ export default function Monthly() {
   };
 
   // Override Handlers
-  const handleOverrideFixedExpense = async (fixedExpenseId: number, month: number, overrideAmount: number) => {
+  const handleOverrideFixedExpense = async (fixedExpenseId: string, month: number, overrideAmount: number) => {
     const response = await fetch('/api/fixed-expenses/overrides', {
       method: 'POST',
       headers: {
@@ -228,7 +228,7 @@ export default function Monthly() {
     }));
   };
 
-  const handleRevertOverride = async (overrideId: number) => {
+  const handleRevertOverride = async (overrideId: string) => {
     await fetch(`/api/fixed-expenses/overrides/${overrideId}`, {
       method: 'DELETE',
     });

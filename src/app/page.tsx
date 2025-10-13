@@ -90,7 +90,7 @@ export default function Home() {
     setExpenses([...expenses, newExpense]);
   };
 
-  const deleteExpense = async (id: number) => {
+  const deleteExpense = async (id: string) => {
     await fetch(`/api/expenses/${id}`, {
       method: 'DELETE',
     });

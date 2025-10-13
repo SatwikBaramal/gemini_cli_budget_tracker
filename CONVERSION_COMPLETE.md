@@ -115,7 +115,7 @@ Created 4 Mongoose models:
 
 4. **⚠️ CRITICAL: Add Environment Variable**
    - Go to **Site settings** → **Environment variables**
-   - Add: `MONGODB_URI` = `mongodb+srv://satwik:1234@cluster0.uduh1te.mongodb.net/budget_tracker?retryWrites=true&w=majority&appName=Cluster0`
+   - Add: `MONGODB_URI` = `mongodb+srv://satwik:<password>@cluster0.uduh1te.mongodb.net/budget_tracker?retryWrites=true&w=majority&appName=Cluster0`
    
 5. **Deploy!**
    - Click "Deploy site"

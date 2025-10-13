@@ -17,7 +17,7 @@ import { ChevronDown, ChevronUp, Pencil, Trash2, Plus } from 'lucide-react';
 import { formatCurrency, getMonthName } from '@/lib/formatters';
 
 interface FixedExpense {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   applicable_months: number[];
@@ -26,8 +26,8 @@ interface FixedExpense {
 interface FixedExpensesManagerProps {
   fixedExpenses: FixedExpense[];
   onAdd: (expense: { name: string; amount: number; applicable_months: number[] }) => void;
-  onUpdate: (id: number, expense: { name: string; amount: number; applicable_months: number[] }) => void;
-  onDelete: (id: number) => void;
+  onUpdate: (id: string, expense: { name: string; amount: number; applicable_months: number[] }) => void;
+  onDelete: (id: string) => void;
   expenseToEdit: FixedExpense | null;
   onEditComplete: () => void;
 }
@@ -44,7 +44,7 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);

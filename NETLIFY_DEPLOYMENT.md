@@ -43,7 +43,7 @@ This is **CRITICAL** for your app to work:
 
 | Key | Value |
 |-----|-------|
-| `MONGODB_URI` | `mongodb+srv://satwik:1234@cluster0.uduh1te.mongodb.net/budget_tracker?retryWrites=true&w=majority&appName=Cluster0` |
+| `MONGODB_URI` | `mongodb+srv://satwik:<password>@cluster0.uduh1te.mongodb.net/budget_tracker?retryWrites=true&w=majority&appName=Cluster0` |
 | `GITHUB_TOKEN` | `your_github_token_for_ai_chatbot` (if you have one) |
 
 4. Click **"Save"**
