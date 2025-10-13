@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/formatters';
+import BudgetProgressBar from './BudgetProgressBar';
 
 interface MonthNavigationGridProps {
   months: number[];
@@ -54,6 +55,15 @@ const MonthNavigationGrid: React.FC<MonthNavigationGridProps> = ({
                   <span className={`font-semibold ${data.remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(data.remaining)}
                   </span>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="pt-2">
+                  <BudgetProgressBar
+                    income={data.spent + data.remaining}
+                    spent={data.spent}
+                    className="text-[10px]"
+                  />
                 </div>
               </CardContent>
             </Card>

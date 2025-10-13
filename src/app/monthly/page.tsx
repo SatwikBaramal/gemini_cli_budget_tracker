@@ -19,6 +19,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import MonthlyExpenseSection from '@/components/MonthlyExpenseSection';
 import FixedExpensesManager from '@/components/FixedExpensesManager';
 import MonthNavigationGrid from '@/components/MonthNavigationGrid';
+import BudgetProgressBar from '@/components/BudgetProgressBar';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { Pencil } from 'lucide-react';
 
@@ -322,6 +323,14 @@ export default function Monthly() {
                     {formatCurrency(monthlyIncome - getTotalSpentForMonth(selectedMonth))}
                   </span>
                 </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <BudgetProgressBar
+                  income={monthlyIncome}
+                  spent={getTotalSpentForMonth(selectedMonth)}
+                />
               </div>
               
               <MonthlyExpenseSection
