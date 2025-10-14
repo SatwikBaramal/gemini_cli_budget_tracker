@@ -23,6 +23,11 @@ export function Summary() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [bufferedContent, setBufferedContent] = useState('');
+  const [displayedContent, setDisplayedContent] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -30,14 +35,103 @@ export function Summary() {
     }
   }, [messages]);
 
+  // Typewriter effect: display buffered content character by character
+  useEffect(() => {
+    if (bufferedContent.length > displayedContent.length) {
+      setIsTyping(true);
+      
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
+
+      typingIntervalRef.current = setInterval(() => {
+        setDisplayedContent(prev => {
+          if (prev.length < bufferedContent.length) {
+            // Display 2-3 characters at a time for smoother effect
+            const charsToAdd = Math.min(3, bufferedContent.length - prev.length);
+            return bufferedContent.slice(0, prev.length + charsToAdd);
+          } else {
+            if (typingIntervalRef.current) {
+              clearInterval(typingIntervalRef.current);
+              typingIntervalRef.current = null;
+            }
+            setIsTyping(false);
+            return prev;
+          }
+        });
+      }, 30); // Adjust this value: lower = faster, higher = slower (30ms is good balance)
+
+      return () => {
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+        }
+      };
+    }
+  }, [bufferedContent, displayedContent.length]);
+
+  // Update the actual message when displayedContent changes
+  useEffect(() => {
+    if (displayedContent && messages.length > 0) {
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex]?.role === 'assistant') {
+          updated[lastIndex] = {
+            role: 'assistant',
+            content: displayedContent
+          };
+        }
+        return updated;
+      });
+    }
+  }, [displayedContent, messages.length]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
+
+    // Cancel any ongoing typewriter effect immediately
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+    setIsTyping(false);
+
+    // If there's buffered content that hasn't finished displaying,
+    // finalize it in the previous message before starting new one
+    if (bufferedContent && displayedContent !== bufferedContent) {
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex]?.role === 'assistant') {
+          updated[lastIndex] = {
+            role: 'assistant',
+            content: bufferedContent
+          };
+        }
+        return updated;
+      });
+    }
 
     const userMessage: Message = { role: 'user', content: inputValue };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
+
+    // Reset buffered and displayed content for new message
+    setBufferedContent('');
+    setDisplayedContent('');
+
+    // Add empty assistant message that we'll populate with streaming content
+    setMessages([...newMessages, { role: 'assistant', content: '' }]);
+
+    // Cancel previous API request if still running
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
 
     try {
       const response = await fetch('/api/expenses/summarize', {
@@ -46,21 +140,56 @@ export function Summary() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ messages: newMessages }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to get response from AI.');
+        throw new Error('Failed to get response from AI.');
       }
 
-      const data = await response.json();
-      const assistantMessage: Message = { role: 'assistant', content: data.response };
-      setMessages([...newMessages, assistantMessage]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  accumulatedContent += parsed.content;
+                  
+                  // Update buffered content (typewriter effect will handle display)
+                  setBufferedContent(accumulatedContent);
+                }
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
 
     } catch (error) {
+      // Don't show error if request was aborted (user sent new message)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      const assistantErrorMessage: Message = { role: 'assistant', content: `Sorry, something went wrong: ${errorMessage}` };
-      setMessages([...newMessages, assistantErrorMessage]);
+      const errorMsg = `Sorry, something went wrong: ${errorMessage}`;
+      setBufferedContent(errorMsg);
+      setDisplayedContent(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +197,16 @@ export function Summary() {
 
   const handleClearChat = () => {
     setMessages([initialMessage]);
+    setBufferedContent('');
+    setDisplayedContent('');
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
   };
 
   return (
@@ -90,7 +229,7 @@ export function Summary() {
             </div>
           </div>
         ))}
-        {isLoading && (
+        {(isLoading || isTyping) && displayedContent.length === 0 && (
           <div className="flex items-end gap-2 justify-start">
             <div className="max-w-xs p-3 rounded-lg bg-gray-200 text-gray-900">
               <p className="text-sm">FinBot is typing...</p>

@@ -69,9 +69,24 @@ export async function POST(req: NextRequest) {
     let fixedExpenseDetails = '';
     const fixedExpenseTotalByMonth: { [key: number]: number } = {};
     
+    // Type definitions for lean query results
+    interface LeanFixedExpense {
+      _id: { toString: () => string };
+      name: string;
+      amount: number;
+      applicableMonths: number[];
+    }
+    
+    interface LeanFixedExpenseOverride {
+      _id: { toString: () => string };
+      fixedExpenseId: { toString: () => string };
+      month: number;
+      overrideAmount: number;
+    }
+    
     if (fixedExpenses && fixedExpenses.length > 0) {
       fixedExpenseDetails = '\n--- Fixed/Recurring Expenses ---\n';
-      fixedExpenses.forEach((fe: any) => {
+      (fixedExpenses as LeanFixedExpense[]).forEach((fe) => {
         const applicableMonths = fe.applicableMonths || [];
         const monthsText = applicableMonths.length === 12 
           ? 'All months' 
@@ -80,17 +95,17 @@ export async function POST(req: NextRequest) {
         fixedExpenseDetails += `\n${fe.name}: ₹${fe.amount.toFixed(2)} (Applied to: ${monthsText})\n`;
         
         // Check for overrides
-        const overridesForExpense = fixedOverrides?.filter((o: any) => o.fixedExpenseId.toString() === fe._id.toString()) || [];
+        const overridesForExpense = (fixedOverrides as LeanFixedExpenseOverride[])?.filter((o) => o.fixedExpenseId.toString() === fe._id.toString()) || [];
         if (overridesForExpense.length > 0) {
           fixedExpenseDetails += `  Overrides:\n`;
-          overridesForExpense.forEach((override: any) => {
+          overridesForExpense.forEach((override) => {
             fixedExpenseDetails += `    - ${monthNames[override.month - 1]}: ₹${override.overrideAmount.toFixed(2)}\n`;
           });
         }
         
         // Calculate total for each month
         applicableMonths.forEach((month: number) => {
-          const override = overridesForExpense.find((o: any) => o.month === month);
+          const override = overridesForExpense.find((o) => o.month === month);
           const amount = override ? override.overrideAmount : fe.amount;
           fixedExpenseTotalByMonth[month] = (fixedExpenseTotalByMonth[month] || 0) + amount;
         });
@@ -341,12 +356,38 @@ Remember: You are a trusted financial advisor helping the user make better finan
       temperature: 0.5,
       top_p: 1.0,
       // max_tokens: 400,
-      model: model
+      model: model,
+      stream: true  // Enable streaming
     });
 
-    const botResponse = response.choices[0].message.content;
+    // Create a ReadableStream to handle the streaming response
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Stream interrupted' })}\n\n`));
+          controller.close();
+        }
+      }
+    });
 
-    return NextResponse.json({ response: botResponse });
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      }
+    });
   } catch (error) {
     console.error('Error in chat API:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
