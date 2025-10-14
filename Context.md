@@ -348,11 +348,6 @@ For each month (1-12), calculate:
 - Global cache object stores connection across requests
 - Automatic reconnection handling
 
-**Environment Variable:**
-```env
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
-```
-
 ## Performance Considerations
 
 **Optimizations:**
