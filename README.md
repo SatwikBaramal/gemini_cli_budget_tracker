@@ -1,89 +1,242 @@
-Budget Tracking App
+# Budget Tracking Application
 
-A simple yet powerful budget tracking app built with Next.js, designed to help users manage their yearly income, monthly costs, and personal expenses with full customization.
+> A comprehensive personal finance management system with AI-powered insights and intelligent budget forecasting
 
-The app automatically calculates monthly income from yearly income and allows users to add, edit, or remove expenses such as rent, savings, mutual funds, bills, or anything else they want to track.
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Latest-green?logo=mongodb)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-✨ Features
+## 🎯 Overview
 
-📅 Yearly & Monthly Income Tracking
+A powerful, modern budget tracking application that helps you take control of your finances through intelligent tracking, AI-powered insights, and predictive forecasting. Built with Next.js and TypeScript, featuring a sophisticated dual-tracking system and an AI financial advisor.
 
-Input yearly income, auto-converts into monthly income.
+## ✨ Key Features
 
-🧾 Expense Management
+### 📊 Dual Tracking System
+- **Yearly Tracking**: Set yearly income with automatic monthly conversion and track recurring annual expenses
+- **Monthly Tracking**: Independent monthly income management with granular expense tracking for each month (Jan-Dec)
 
-Add custom expenses (e.g., Rent, Savings, Investments).
+### 💰 Smart Expense Management
+- **One-Time Expenses**: Add, edit, and delete expenses for specific months
+- **Fixed/Recurring Expenses**: Create expenses that automatically apply to selected months
+- **Override System**: Modify fixed expense amounts for specific months without affecting other months
+- **Category Recognition**: Intelligent expense categorization for better insights
 
-Edit and delete expenses as needed.
+### 🤖 AI Financial Advisor (FinBot)
+- **Temporal Awareness**: Distinguishes between past spending, current progress, and future plans
+- **Personalized Insights**: Analyzes spending patterns and identifies trends
+- **Budget Recommendations**: Applies 50/30/20 rule and industry-standard spending percentages
+- **Predictive Forecasting**: Calculates available budget and suggests optimal allocation
+- **Goal Planning**: Helps set and achieve financial objectives with actionable steps
 
-Track recurring and one-time expenses.
+### 📈 Advanced Analytics
+- **Real-time Calculations**: Instant updates to all financial metrics
+- **Month-over-Month Analysis**: Track spending trends across months
+- **Budget Health Indicators**: Visual feedback on surplus/deficit status
+- **Progress Tracking**: Daily budget monitoring for current month
+- **Future Projections**: View available budget for upcoming months
 
-📊 Overview Dashboard
+### 🎨 Modern User Interface
+- **Responsive Design**: Seamless experience across desktop, tablet, and mobile
+- **Interactive Charts**: Visual expense distribution with pie charts
+- **Month Navigation Grid**: Quick access to any month with color-coded status
+- **Two View Modes**: 
+  - Current Month Focus: Detailed view with prominent display
+  - All Months Accordion: Comprehensive overview of entire year
+- **Clean & Intuitive**: Built with shadcn/ui components and Tailwind CSS
 
-Displays income vs expenses.
+## 🛠️ Technology Stack
 
-Highlights remaining balance.
+### Frontend
+- **Framework**: Next.js 15.5 (App Router)
+- **Language**: TypeScript 5.0
+- **Styling**: Tailwind CSS 4.0
+- **UI Components**: shadcn/ui (Radix UI)
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **State Management**: React Hooks
 
-Clean and interactive charts.
+### Backend
+- **Runtime**: Node.js
+- **Database**: MongoDB with Mongoose ODM
+- **API**: Next.js API Routes (serverless)
+- **AI Integration**: OpenAI API (GitHub Models)
 
-⚡ Customization
+### Development Tools
+- **Package Manager**: npm
+- **Linting**: ESLint
+- **Type Checking**: TypeScript
 
-Users can update and personalize all inputs anytime.
+## 🚀 Getting Started
 
-🌐 Responsive UI
+### Prerequisites
+- Node.js 18+ and npm
+- MongoDB instance (local or cloud)
+- GitHub Token for AI features (optional)
 
-Works seamlessly on desktop and mobile.
+### Installation
 
-🛠️ Tech Stack
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd budget_tracking_app
+   ```
 
-Frontend: Next.js
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-UI Components: Tailwind CSS + ShadCN UI (for modern design)
+3. **Configure environment variables**
+   
+   Create a `.env.local` file in the root directory:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   GITHUB_TOKEN=your_github_token_for_ai_features
+   ```
 
-State Management: React Hooks / Context API (lightweight & simple)
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
 
-Charts: Recharts (for expense visualization)
+5. **Open in browser**
+   
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-Deployment: Vercel (easy Next.js hosting)
+### Build for Production
 
-📝 Example Usage
+```bash
+npm run build
+npm start
+```
 
-Set yearly income
+## 📖 Usage Guide
 
-Example: 13,00,000 INR
+### Setting Up Your Budget
 
-Auto-calculates monthly: 1,08,333 INR
+1. **Choose Your Tracking Mode**
+   - Use **Yearly Tracking** for high-level annual planning
+   - Use **Monthly Tracking** for detailed month-by-month management
 
-Add Expenses
+2. **Set Your Income**
+   - Enter yearly income (auto-converts to monthly) or set monthly income directly
+   - Update anytime as your income changes
 
-Rent: 20,000
+3. **Add Your Expenses**
+   - **For recurring expenses**: Use Fixed Expenses Manager to create expenses that auto-apply to selected months
+   - **For one-time expenses**: Add directly to specific months
+   - Edit or delete expenses as needed
 
-Mutual Funds: 10,000
+4. **Monitor Your Budget**
+   - View real-time calculations of spending vs. income
+   - Check budget health for each month
+   - Use month navigation grid to quickly jump between months
 
-Savings: 20,000
+5. **Get AI Insights**
+   - Ask FinBot questions about your spending
+   - Request budget recommendations
+   - Get forecasts for future months
+   - Receive personalized financial advice
 
-Food & Utilities: 15,000
+### Example Queries for FinBot
 
-Dashboard View
+- "How much money do I have left for November?"
+- "Which months did I overspend and why?"
+- "Where should I allocate my remaining budget?"
+- "What's my average monthly spending on food?"
+- "Help me create a savings plan for ₹50,000"
+- "Analyze my spending trends over the past 6 months"
 
-Monthly income: 1,08,333
+## 📁 Project Structure
 
-Total expenses: 65,000
+```
+budget_tracking_app/
+├── src/
+│   ├── app/
+│   │   ├── api/                    # API routes
+│   │   │   ├── expenses/           # Expense endpoints
+│   │   │   ├── fixed-expenses/     # Fixed expense endpoints
+│   │   │   └── income/             # Income endpoints
+│   │   ├── monthly/                # Monthly tracking page
+│   │   ├── page.tsx                # Yearly tracking page
+│   │   └── layout.tsx              # Root layout
+│   ├── components/
+│   │   ├── Dashboard.tsx           # Main dashboard
+│   │   ├── FixedExpensesManager.tsx
+│   │   ├── MonthlyExpenseSection.tsx
+│   │   ├── Summary.tsx             # AI chatbot component
+│   │   └── ui/                     # shadcn/ui components
+│   └── lib/
+│       ├── models/                 # MongoDB schemas
+│       ├── mongodb.ts              # Database connection
+│       └── formatters.ts           # Utility functions
+├── public/                         # Static assets
+└── package.json
+```
 
-Remaining balance: 43,333
+## 🎯 Key Features in Detail
 
-🎨 Design Notes
+### Fixed Expenses System
 
-Use a minimal, clean, modern UI.
+Create recurring expenses that automatically appear in selected months:
 
-Dashboard should display summary cards:
+- **Flexibility**: Choose which months each expense applies to (e.g., rent for all 12 months, insurance for quarterly months)
+- **Override Capability**: Modify amount for specific months (e.g., increased rent in one month)
+- **Visual Distinction**: Fixed expenses show with blue background and pin icon
+- **Easy Management**: Collapsible manager for adding, editing, and deleting fixed expenses
 
-Total Income
+### Temporal Budget Awareness
 
-Total Expenses
+The AI understands time context:
 
-Remaining Balance
+- **Past Months**: Analyzes actual spending (what you've already spent)
+- **Current Month**: Tracks progress and calculates remaining daily budget
+- **Future Months**: Treats as planned expenses and forecasts available budget
 
-Expenses should be shown in a list + pie chart for visualization.
+### Month Navigation
 
-Mobile view should stack cards for easy readability.
+Quick and intuitive navigation:
+
+- **Grid View**: Visual overview of all 12 months
+- **Color Coding**: Green for surplus, red for deficit
+- **Quick Stats**: See spent and remaining amounts at a glance
+- **One-Click Access**: Jump to any month instantly
+
+## 🔒 Data Privacy
+
+- All financial data is stored securely in your MongoDB database
+- No third-party data sharing
+- AI interactions use anonymized data patterns
+- Self-hosted deployment option available
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) - The React framework
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
+- [Recharts](https://recharts.org/) - Composable charting library
+- [MongoDB](https://www.mongodb.com/) - Database platform
+- [Lucide](https://lucide.dev/) - Icon library
+
+## 📧 Support
+
+For support, email your-email@example.com or open an issue in the repository.
+
+---
+
+**Built with ❤️ using Next.js and TypeScript**
