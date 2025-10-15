@@ -28,6 +28,8 @@ export function Summary() {
   const [isTyping, setIsTyping] = useState(false);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [messageCount, setMessageCount] = useState(0);
+  const [lastResetTime, setLastResetTime] = useState(Date.now());
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -89,6 +91,79 @@ export function Summary() {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
+    // Input validation and sanitization
+    const sanitizedInput = inputValue.trim();
+
+    // Rate limiting check
+    const now = Date.now();
+    const timeWindow = 60000; // 1 minute
+
+    // Reset counter every minute
+    if (now - lastResetTime > timeWindow) {
+      setMessageCount(0);
+      setLastResetTime(now);
+    }
+
+    // Limit to 15 messages per minute
+    if (messageCount >= 15) {
+      const warningMessage: Message = {
+        role: 'assistant',
+        content: "You're sending messages too quickly. Please wait a moment before asking another question."
+      };
+      setMessages([...messages, warningMessage]);
+      setInputValue('');
+      return;
+    }
+
+    // Check for suspicious patterns (basic prompt injection detection)
+    const suspiciousPatterns = [
+      /ignore.*previous.*instructions?/i,
+      /you are now/i,
+      /act as/i,
+      /pretend.*you.*are/i,
+      /forget.*above/i,
+      /new instructions?:/i,
+      /system:?\s*$/i,
+      /\[system\]/i,
+      /reveal.*prompt/i,
+      /show.*instructions/i,
+    ];
+
+    const containsSuspiciousPattern = suspiciousPatterns.some(pattern =>
+      pattern.test(sanitizedInput)
+    );
+
+    if (containsSuspiciousPattern) {
+      // Add warning message instead of sending
+      const warningMessage: Message = {
+        role: 'assistant',
+        content: "I'm FinBot, your budget assistant. I can only help with questions about your finances and budgeting. Please ask me something about managing your money!"
+      };
+      setMessages([...messages,
+        { role: 'user', content: sanitizedInput },
+        warningMessage
+      ]);
+      setInputValue('');
+      return;
+    }
+
+    // Length limit (prevent excessively long inputs)
+    if (sanitizedInput.length > 500) {
+      const warningMessage: Message = {
+        role: 'assistant',
+        content: "Please keep your questions under 500 characters for better responses. Try breaking it into smaller questions!"
+      };
+      setMessages([...messages,
+        { role: 'user', content: sanitizedInput.substring(0, 500) + '...' },
+        warningMessage
+      ]);
+      setInputValue('');
+      return;
+    }
+
+    // Increment message count
+    setMessageCount(prev => prev + 1);
+
     // Cancel any ongoing typewriter effect immediately
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
@@ -112,7 +187,7 @@ export function Summary() {
       });
     }
 
-    const userMessage: Message = { role: 'user', content: inputValue };
+    const userMessage: Message = { role: 'user', content: sanitizedInput };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInputValue('');

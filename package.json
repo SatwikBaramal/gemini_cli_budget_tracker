@@ -10,6 +10,7 @@
     "migrate": "tsx scripts/migrate-to-mongodb.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.33.4",
     "@google/gemini-cli-core": "^0.5.4",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
