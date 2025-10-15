@@ -13,6 +13,8 @@ interface Expense {
   id: string;
   name: string;
   amount: number;
+  month?: number;
+  type?: string;
 }
 
 type SortKey = 'name' | 'amount';
@@ -90,13 +92,6 @@ export default function Home() {
     setExpenses([...expenses, newExpense]);
   };
 
-  const deleteExpense = async (id: string) => {
-    await fetch(`/api/expenses/${id}`, {
-      method: 'DELETE',
-    });
-    setExpenses(expenses.filter((expense) => expense.id !== id));
-  };
-
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
@@ -113,7 +108,6 @@ export default function Home() {
             <ExpenseForm addExpense={addExpense} />
             <ExpenseList
               expenses={sortedExpenses}
-              deleteExpense={deleteExpense}
               requestSort={requestSort}
               sortConfig={sortConfig}
             />

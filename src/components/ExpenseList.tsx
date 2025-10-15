@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -24,16 +24,34 @@ interface Expense {
   id: string;
   name: string;
   amount: number;
+  month?: number;  // 1-12 for monthly expenses
+  type?: string;   // 'yearly' or 'monthly'
 }
 
 interface ExpenseListProps {
   expenses: Expense[];
-  deleteExpense: (id: string) => void;
   requestSort: (key: 'name' | 'amount') => void;
   sortConfig: { key: 'name' | 'amount'; direction: 'ascending' | 'descending' } | null;
 }
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, deleteExpense, requestSort, sortConfig }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortConfig }) => {
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  // Filter expenses based on selected month
+  const filteredExpenses = useMemo(() => {
+    if (selectedMonth === 'all') {
+      return expenses;
+    } else if (selectedMonth === 'yearly') {
+      return expenses.filter(exp => !exp.month || exp.type === 'yearly');
+    } else {
+      const monthNum = parseInt(selectedMonth);
+      return expenses.filter(exp => exp.month === monthNum);
+    }
+  }, [expenses, selectedMonth]);
+  
   const getSortIndicator = (key: 'name' | 'amount') => {
     if (!sortConfig || sortConfig.key !== key) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />;
@@ -58,32 +76,35 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, deleteExpense, requ
               {getSortIndicator('amount')}
             </Button>
           </TableHead>
-          <TableHead className="text-right"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {expenses.length > 0 ? (
-          expenses.map((expense) => (
+        {filteredExpenses.length > 0 ? (
+          filteredExpenses.map((expense) => (
             <TableRow key={expense.id}>
-              <TableCell className="font-medium">{expense.name}</TableCell>
-              <TableCell className="text-right">
-                ₹{expense.amount.toLocaleString('en-IN')}
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {expense.name}
+                  {selectedMonth === 'all' && expense.month && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                      {monthNames[expense.month - 1].substring(0, 3)}
+                    </span>
+                  )}
+                  {selectedMonth === 'all' && !expense.month && (
+                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                      Yearly
+                    </span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hover:bg-red-500 hover:text-white"
-                  onClick={() => deleteExpense(expense.id)}
-                >
-                  Delete
-                </Button>
+                ₹{expense.amount.toLocaleString('en-IN')}
               </TableCell>
             </TableRow>
           ))
         ) : (
           <TableRow key="empty">
-            <TableCell colSpan={3} className="text-center">
+            <TableCell colSpan={2} className="text-center">
               No expenses added yet.
             </TableCell>
           </TableRow>
@@ -95,7 +116,20 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, deleteExpense, requ
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Expenses</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>Expenses</CardTitle>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="border rounded-md px-3 py-1 text-sm"
+          >
+            <option value="all">All Expenses</option>
+            <option value="yearly">Yearly Only</option>
+            {monthNames.map((month, idx) => (
+              <option key={idx + 1} value={String(idx + 1)}>{month}</option>
+            ))}
+          </select>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="h-96 overflow-y-auto border rounded-md">
