@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import IncomeInput from '@/components/IncomeInput';
-import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseList from '@/components/ExpenseList';
 import Dashboard from '@/components/Dashboard';
 import { Button } from '@/components/ui/button';
@@ -80,18 +79,6 @@ export default function Home() {
     });
   };
 
-  const addExpense = async (expense: { name: string; amount: number }) => {
-    const response = await fetch('/api/expenses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(expense),
-    });
-    const newExpense = await response.json();
-    setExpenses([...expenses, newExpense]);
-  };
-
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
@@ -105,7 +92,9 @@ export default function Home() {
               </Link>
             </div>
             <IncomeInput label="Yearly Income (INR)" value={yearlyIncome} onChange={updateYearlyIncome} />
-            <ExpenseForm addExpense={addExpense} />
+            <Link href="/monthly">
+              <Button className="w-full mb-4">Add Expense</Button>
+            </Link>
             <ExpenseList
               expenses={sortedExpenses}
               requestSort={requestSort}

@@ -22,12 +22,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  await connectToDatabase();
-  const { name, amount } = await request.json();
-  const expense = await Expense.create({
-    name,
-    amount,
-    type: 'yearly'
-  });
-  return NextResponse.json({ id: expense._id.toString(), name, amount });
+  // Yearly expenses are no longer supported - users should use monthly expenses instead
+  return NextResponse.json(
+    { error: 'Yearly expenses are no longer supported. Please use monthly expenses instead.' },
+    { status: 403 }
+  );
 }

@@ -133,3 +133,12 @@
 .no-arrows {
   -moz-appearance: textfield;
 }
+
+/* Cursor pointer for interactive elements */
+button,
+a,
+[role="button"],
+select,
+[data-slot="button"] {
+  cursor: pointer;
+}
