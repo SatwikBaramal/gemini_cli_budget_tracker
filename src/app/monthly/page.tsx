@@ -20,6 +20,7 @@ import MonthlyExpenseSection from '@/components/MonthlyExpenseSection';
 import FixedExpensesManager from '@/components/FixedExpensesManager';
 import MonthNavigationGrid from '@/components/MonthNavigationGrid';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
+import YearSelector from '@/components/YearSelector';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { Pencil } from 'lucide-react';
 
@@ -51,6 +52,7 @@ interface FixedExpense {
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function Monthly() {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [expensesByMonth, setExpensesByMonth] = useState<{ [key: number]: Expense[] }>({});
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
@@ -62,13 +64,13 @@ export default function Monthly() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch monthly income
-      const incomeRes = await fetch('/api/income/monthly');
+      // Fetch monthly income for the selected year
+      const incomeRes = await fetch(`/api/income/monthly?year=${selectedYear}`);
       const incomeData = await incomeRes.json();
       setMonthlyIncome(Number(incomeData.value));
 
-      // Fetch all monthly expenses
-      const expensesRes = await fetch('/api/expenses/monthly');
+      // Fetch all monthly expenses for the selected year
+      const expensesRes = await fetch(`/api/expenses/monthly?year=${selectedYear}`);
       const allExpenses: Expense[] = await expensesRes.json();
 
       // Group expenses by month
@@ -78,21 +80,21 @@ export default function Monthly() {
       });
       setExpensesByMonth(grouped);
 
-      // Fetch fixed expenses
-      const fixedRes = await fetch('/api/fixed-expenses');
+      // Fetch fixed expenses for the selected year
+      const fixedRes = await fetch(`/api/fixed-expenses?year=${selectedYear}`);
       const fixedData: FixedExpense[] = await fixedRes.json();
       setFixedExpenses(fixedData);
     };
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   const addExpense = async (monthNumber: number, expense: { name: string; amount: number }) => {
-    const response = await fetch(`/api/expenses/monthly/${monthNumber}`, {
+    const response = await fetch(`/api/expenses/monthly/${monthNumber}?year=${selectedYear}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(expense),
+      body: JSON.stringify({ ...expense, year: selectedYear }),
     });
     const newExpense = await response.json();
     
@@ -103,7 +105,7 @@ export default function Monthly() {
   };
 
   const deleteExpense = async (monthNumber: number, id: string) => {
-    await fetch(`/api/expenses/monthly/${monthNumber}/${id}`, {
+    await fetch(`/api/expenses/monthly/${monthNumber}/${id}?year=${selectedYear}`, {
       method: 'DELETE',
     });
     
@@ -143,7 +145,7 @@ export default function Monthly() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ income: newIncome }),
+        body: JSON.stringify({ income: newIncome, year: selectedYear }),
       });
       setMonthlyIncome(newIncome);
       setIsDialogOpen(false);
@@ -152,31 +154,31 @@ export default function Monthly() {
 
   // Fixed Expenses Handlers
   const handleAddFixedExpense = async (expense: { name: string; amount: number; applicable_months: number[] }) => {
-    const response = await fetch('/api/fixed-expenses', {
+    const response = await fetch('/api/fixed-expenses?year=${selectedYear}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(expense),
+      body: JSON.stringify({ ...expense, year: selectedYear }),
     });
     const newFixedExpense = await response.json();
     setFixedExpenses([...fixedExpenses, newFixedExpense]);
   };
 
   const handleUpdateFixedExpense = async (id: string, expense: { name: string; amount: number; applicable_months: number[] }) => {
-    const response = await fetch(`/api/fixed-expenses/${id}`, {
+    const response = await fetch(`/api/fixed-expenses/${id}?year=${selectedYear}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(expense),
+      body: JSON.stringify({ ...expense, year: selectedYear }),
     });
     const updatedExpense = await response.json();
     setFixedExpenses(fixedExpenses.map(fe => fe.id === id ? updatedExpense : fe));
   };
 
   const handleDeleteFixedExpense = async (id: string) => {
-    await fetch(`/api/fixed-expenses/${id}`, {
+    await fetch(`/api/fixed-expenses/${id}?year=${selectedYear}`, {
       method: 'DELETE',
     });
     setFixedExpenses(fixedExpenses.filter(fe => fe.id !== id));
@@ -201,7 +203,7 @@ export default function Monthly() {
 
   // Override Handlers
   const handleOverrideFixedExpense = async (fixedExpenseId: string, month: number, overrideAmount: number) => {
-    const response = await fetch('/api/fixed-expenses/overrides', {
+    const response = await fetch('/api/fixed-expenses/overrides?year=${selectedYear}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -210,6 +212,7 @@ export default function Monthly() {
         fixed_expense_id: fixedExpenseId,
         month,
         override_amount: overrideAmount,
+        year: selectedYear,
       }),
     });
     const newOverride = await response.json();
@@ -229,7 +232,7 @@ export default function Monthly() {
   };
 
   const handleRevertOverride = async (overrideId: string) => {
-    await fetch(`/api/fixed-expenses/overrides/${overrideId}`, {
+    await fetch(`/api/fixed-expenses/overrides/${overrideId}?year=${selectedYear}`, {
       method: 'DELETE',
     });
     
@@ -252,10 +255,16 @@ export default function Monthly() {
               Track expenses for each month separately
             </p>
           </div>
-              <Link href="/">
-                <Button>Track Yearly</Button>
-              </Link>
-            </div>
+          <div className="flex gap-2 items-center">
+            <YearSelector 
+              selectedYear={selectedYear} 
+              onYearChange={setSelectedYear} 
+            />
+            <Link href="/">
+              <Button>Track Yearly</Button>
+            </Link>
+          </div>
+        </div>
 
         {/* Income Display */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">

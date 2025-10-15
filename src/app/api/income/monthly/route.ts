@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Setting } from '@/lib/models/Setting';
 
-export async function GET() {
+export async function GET(request: Request) {
   await connectToDatabase();
-  const result = await Setting.findOne({ key: 'monthlyIncome' });
+  const { searchParams } = new URL(request.url);
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+  
+  const result = await Setting.findOne({ key: 'monthlyIncome', year });
   
   return NextResponse.json(result ? { value: result.value } : { value: '0' }, {
     headers: {
@@ -15,9 +18,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   await connectToDatabase();
-  const { income } = await request.json();
+  const { income, year } = await request.json();
+  const yearToUse = year || new Date().getFullYear();
+  
   await Setting.findOneAndUpdate(
-    { key: 'monthlyIncome' },
+    { key: 'monthlyIncome', year: yearToUse },
     { value: income.toString() },
     { upsert: true, new: true }
   );

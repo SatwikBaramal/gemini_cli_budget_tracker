@@ -10,19 +10,22 @@ export async function PUT(
   try {
     await connectToDatabase();
     const { id } = await params;
-    const { name, amount, applicable_months } = await request.json();
+    const { name, amount, applicable_months, year } = await request.json();
+    const yearToUse = year || new Date().getFullYear();
     
     await FixedExpense.findByIdAndUpdate(id, {
       name,
       amount,
-      applicableMonths: applicable_months
+      applicableMonths: applicable_months,
+      year: yearToUse
     });
     
     return NextResponse.json({ 
       id, 
       name, 
       amount, 
-      applicable_months 
+      applicable_months,
+      year: yearToUse
     });
   } catch (error) {
     console.error('Error updating fixed expense:', error);
@@ -37,12 +40,14 @@ export async function DELETE(
   try {
     await connectToDatabase();
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    // Delete the fixed expense
-    await FixedExpense.findByIdAndDelete(id);
+    // Delete the fixed expense (with year safety check)
+    await FixedExpense.findOneAndDelete({ _id: id, year });
     
-    // Delete all related overrides
-    await FixedExpenseOverride.deleteMany({ fixedExpenseId: id });
+    // Delete all related overrides for this year
+    await FixedExpenseOverride.deleteMany({ fixedExpenseId: id, year });
     
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -9,12 +9,14 @@ export async function DELETE(
   await connectToDatabase();
   const { month: monthStr, id } = await params;
   const month = parseInt(monthStr);
+  const { searchParams } = new URL(request.url);
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
 
   if (isNaN(month) || month < 1 || month > 12) {
     return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
   }
 
-  await Expense.findOneAndDelete({ _id: id, type: 'monthly', month });
+  await Expense.findOneAndDelete({ _id: id, type: 'monthly', month, year });
   
   return NextResponse.json({ success: true });
 }

@@ -6,6 +6,7 @@ export interface IExpense {
   type: 'yearly' | 'monthly';
   month?: number;
   date?: string;
+  year: number;
 }
 
 const ExpenseSchema = new Schema<IExpense>({
@@ -14,6 +15,7 @@ const ExpenseSchema = new Schema<IExpense>({
   type: { type: String, required: true, default: 'yearly', enum: ['yearly', 'monthly'] },
   month: { type: Number, min: 1, max: 12 },
   date: { type: String },
+  year: { type: Number, required: true, default: 2025 },
 }, {
   timestamps: true,
 });
@@ -21,6 +23,7 @@ const ExpenseSchema = new Schema<IExpense>({
 // Create indexes for better performance
 ExpenseSchema.index({ month: 1 });
 ExpenseSchema.index({ type: 1 });
+ExpenseSchema.index({ year: 1, type: 1 });
 
 export const Expense: Model<IExpense> = mongoose.models.Expense || mongoose.model<IExpense>('Expense', ExpenseSchema);
 

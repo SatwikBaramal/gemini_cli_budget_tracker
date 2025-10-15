@@ -9,8 +9,11 @@ export async function DELETE(
   try {
     await connectToDatabase();
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    await FixedExpenseOverride.findByIdAndDelete(id);
+    // Delete with year safety check
+    await FixedExpenseOverride.findOneAndDelete({ _id: id, year });
     
     return NextResponse.json({ success: true });
   } catch (error) {

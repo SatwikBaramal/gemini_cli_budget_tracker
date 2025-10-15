@@ -134,6 +134,7 @@ const LineChartComponent: React.FC = () => {
     return ((lastValue - firstValue) / firstValue) * 100;
   }, [processedData]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (

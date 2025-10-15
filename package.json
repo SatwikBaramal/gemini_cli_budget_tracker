@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate": "tsx scripts/migrate-to-mongodb.ts"
+    "migrate": "tsx scripts/migrate-to-mongodb.ts",
+    "migrate:year": "tsx scripts/add-year-field-migration.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.4",

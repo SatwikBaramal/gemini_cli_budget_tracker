@@ -9,12 +9,14 @@ export async function GET(
   await connectToDatabase();
   const { month: monthStr } = await params;
   const month = parseInt(monthStr);
+  const { searchParams } = new URL(request.url);
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
   
   if (isNaN(month) || month < 1 || month > 12) {
     return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
   }
 
-  const expenses = await Expense.find({ type: 'monthly', month })
+  const expenses = await Expense.find({ type: 'monthly', month, year })
     .sort({ date: -1 })
     .lean();
   
@@ -25,7 +27,8 @@ export async function GET(
     amount: expense.amount,
     type: expense.type,
     month: expense.month,
-    date: expense.date
+    date: expense.date,
+    year: expense.year
   }));
   
   return NextResponse.json(mappedExpenses);
@@ -43,7 +46,8 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid month' }, { status: 400 });
   }
 
-  const { name, amount } = await request.json();
+  const { name, amount, year } = await request.json();
+  const yearToUse = year || new Date().getFullYear();
   const date = new Date().toISOString();
   
   const expense = await Expense.create({
@@ -51,7 +55,8 @@ export async function POST(
     amount,
     type: 'monthly',
     month,
-    date
+    date,
+    year: yearToUse
   });
   
   return NextResponse.json({ 
@@ -60,7 +65,8 @@ export async function POST(
     amount, 
     type: 'monthly',
     month,
-    date 
+    date,
+    year: yearToUse
   });
 }
 

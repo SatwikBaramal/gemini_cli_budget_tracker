@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/lib/models/Expense';
 
-export async function GET() {
+export async function GET(request: Request) {
   await connectToDatabase();
-  // Get all monthly expenses across all months
-  const expenses = await Expense.find({ type: 'monthly' })
+  const { searchParams } = new URL(request.url);
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+  
+  // Get all monthly expenses across all months for the specified year
+  const expenses = await Expense.find({ type: 'monthly', year })
     .sort({ month: 1, date: -1 })
     .lean();
   
@@ -16,7 +19,8 @@ export async function GET() {
     amount: expense.amount,
     type: expense.type,
     month: expense.month,
-    date: expense.date
+    date: expense.date,
+    year: expense.year
   }));
   
   return NextResponse.json(mappedExpenses, {

@@ -66,7 +66,6 @@ const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
   const getMonthsInPeriod = (): number[] => {
     const now = new Date();
     const currentMonth = now.getMonth() + 1; // 1-12
-    const currentYear = now.getFullYear();
     
     switch (timePeriod) {
       case 'this-month':

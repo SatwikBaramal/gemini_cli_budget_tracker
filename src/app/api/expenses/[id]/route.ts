@@ -8,6 +8,9 @@ export async function DELETE(
 ) {
   await connectToDatabase();
   const { id } = await params;
-  await Expense.findByIdAndDelete(id);
+  const { searchParams } = new URL(request.url);
+  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+  
+  await Expense.findOneAndDelete({ _id: id, type: 'yearly', year });
   return NextResponse.json({ message: `Expense ${id} deleted` });
 }

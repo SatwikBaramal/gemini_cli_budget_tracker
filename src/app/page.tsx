@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import IncomeInput from '@/components/IncomeInput';
 import ExpenseList from '@/components/ExpenseList';
 import Dashboard from '@/components/Dashboard';
+import YearSelector from '@/components/YearSelector';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -19,20 +20,21 @@ interface Expense {
 type SortKey = 'name' | 'amount';
 
 export default function Home() {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyIncome, setYearlyIncome] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
 
   useEffect(() => {
     const fetchData = async () => {
-      const incomeRes = await fetch('/api/income');
+      const incomeRes = await fetch(`/api/income?year=${selectedYear}`);
       const incomeData = await incomeRes.json();
       setYearlyIncome(Number(incomeData.value));
 
-      // Fetch both yearly and monthly expenses
+      // Fetch both yearly and monthly expenses for the selected year
       const [yearlyRes, monthlyRes] = await Promise.all([
-        fetch('/api/expenses'),
-        fetch('/api/expenses/monthly')
+        fetch(`/api/expenses?year=${selectedYear}`),
+        fetch(`/api/expenses/monthly?year=${selectedYear}`)
       ]);
       
       const yearlyExpenses = await yearlyRes.json();
@@ -42,7 +44,7 @@ export default function Home() {
       setExpenses([...yearlyExpenses, ...monthlyExpenses]);
     };
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   const sortedExpenses = useMemo(() => {
     const sortableExpenses = [...expenses];
@@ -75,7 +77,7 @@ export default function Home() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ income }),
+      body: JSON.stringify({ income, year: selectedYear }),
     });
   };
 
@@ -87,9 +89,15 @@ export default function Home() {
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-gray-200 rounded-md">
               <h2 className="text-lg font-medium text-center">Yearly</h2>
-              <Link href="/monthly">
-                <Button>Track Monthly</Button>
-              </Link>
+              <div className="flex gap-2 items-center">
+                <YearSelector 
+                  selectedYear={selectedYear} 
+                  onYearChange={setSelectedYear} 
+                />
+                <Link href="/monthly">
+                  <Button>Track Monthly</Button>
+                </Link>
+              </div>
             </div>
             <IncomeInput label="Yearly Income (INR)" value={yearlyIncome} onChange={updateYearlyIncome} />
             <Link href="/monthly">
