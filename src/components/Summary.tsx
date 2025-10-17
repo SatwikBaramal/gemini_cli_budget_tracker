@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Send, RotateCw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CoinLoadingAnimation } from './CoinLoadingAnimation';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -30,6 +31,8 @@ export function Summary() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [messageCount, setMessageCount] = useState(0);
   const [lastResetTime, setLastResetTime] = useState(Date.now());
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
+  const [shouldShowLoading, setShouldShowLoading] = useState(false);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -87,6 +90,22 @@ export function Summary() {
       });
     }
   }, [displayedContent, messages.length]);
+
+  // Handle minimum display time for loading animation
+  useEffect(() => {
+    if (!isLoading && loadingStartTime && bufferedContent) {
+      const elapsed = Date.now() - loadingStartTime;
+      if (elapsed < 1000) {
+        setTimeout(() => {
+          setShouldShowLoading(false);
+          setLoadingStartTime(null);
+        }, 1000 - elapsed);
+      } else {
+        setShouldShowLoading(false);
+        setLoadingStartTime(null);
+      }
+    }
+  }, [isLoading, bufferedContent, loadingStartTime]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -192,6 +211,8 @@ export function Summary() {
     setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
+    setLoadingStartTime(Date.now());
+    setShouldShowLoading(true);
 
     // Reset buffered and displayed content for new message
     setBufferedContent('');
@@ -304,10 +325,10 @@ export function Summary() {
             </div>
           </div>
         ))}
-        {(isLoading || isTyping) && displayedContent.length === 0 && (
+        {shouldShowLoading && displayedContent.length === 0 && (
           <div className="flex items-end gap-2 justify-start">
             <div className="max-w-xs p-3 rounded-lg bg-gray-200 text-gray-900">
-              <p className="text-sm">FinBot is typing...</p>
+              <CoinLoadingAnimation />
             </div>
           </div>
         )}

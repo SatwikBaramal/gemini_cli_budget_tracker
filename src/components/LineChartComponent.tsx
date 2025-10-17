@@ -17,6 +17,22 @@ interface MonthlyExpense {
   date?: string;
 }
 
+interface FixedExpenseOverride {
+  id: string;
+  fixed_expense_id: string;
+  month: number;
+  override_amount: number;
+  date: string;
+}
+
+interface FixedExpense {
+  id: string;
+  name: string;
+  amount: number;
+  applicable_months: number[];
+  overrides?: FixedExpenseOverride[];
+}
+
 interface MonthData {
   month: string;
   monthNumber: number;
@@ -27,6 +43,7 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 const LineChartComponent: React.FC = () => {
   const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('6M');
   const [viewMode, setViewMode] = useState<ViewMode>('expenses');
@@ -35,15 +52,18 @@ const LineChartComponent: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [expensesRes, incomeRes] = await Promise.all([
+        const [expensesRes, fixedRes, incomeRes] = await Promise.all([
           fetch('/api/expenses/monthly'),
+          fetch('/api/fixed-expenses'),
           fetch('/api/income/monthly')
         ]);
         
         const expenses = await expensesRes.json();
+        const fixed = await fixedRes.json();
         const incomeData = await incomeRes.json();
         
         setMonthlyExpenses(expenses);
+        setFixedExpenses(fixed);
         setMonthlyIncome(Number(incomeData.value));
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -56,8 +76,8 @@ const LineChartComponent: React.FC = () => {
   }, []);
 
   const processedData = useMemo(() => {
-    // Aggregate expenses by month
-    const expensesByMonth = monthlyExpenses.reduce((acc, expense) => {
+    // Aggregate monthly expenses by month
+    const monthlyExpensesByMonth = monthlyExpenses.reduce((acc, expense) => {
       const month = expense.month || 0;
       if (month > 0 && month <= 12) {
         acc[month] = (acc[month] || 0) + expense.amount;
@@ -65,10 +85,28 @@ const LineChartComponent: React.FC = () => {
       return acc;
     }, {} as Record<number, number>);
 
+    // Calculate fixed expenses for each month
+    const calculateFixedExpensesForMonth = (monthNumber: number): number => {
+      return fixedExpenses.reduce((total, fixedExpense) => {
+        // Check if this fixed expense applies to the month
+        if (!fixedExpense.applicable_months.includes(monthNumber)) {
+          return total;
+        }
+        
+        // Check if there's an override for this month
+        const override = fixedExpense.overrides?.find(o => o.month === monthNumber);
+        const amount = override ? override.override_amount : fixedExpense.amount;
+        
+        return total + amount;
+      }, 0);
+    };
+
     // Create data for all 12 months
     const allMonthsData: MonthData[] = Array.from({ length: 12 }, (_, i) => {
       const monthNumber = i + 1;
-      const totalExpenses = expensesByMonth[monthNumber] || 0;
+      const monthlyExpensesTotal = monthlyExpensesByMonth[monthNumber] || 0;
+      const fixedExpensesTotal = calculateFixedExpensesForMonth(monthNumber);
+      const totalExpenses = monthlyExpensesTotal + fixedExpensesTotal;
       const savings = monthlyIncome - totalExpenses;
       
       return {
@@ -123,7 +161,7 @@ const LineChartComponent: React.FC = () => {
       
       return bDistance - aDistance;
     });
-  }, [monthlyExpenses, monthlyIncome, selectedPeriod, viewMode]);
+  }, [monthlyExpenses, fixedExpenses, monthlyIncome, selectedPeriod, viewMode]);
 
   // Calculate percentage change (simplified)
   const percentageChange = useMemo(() => {

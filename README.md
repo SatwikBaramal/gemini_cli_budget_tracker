@@ -105,6 +105,23 @@ A powerful, modern budget tracking application that helps you take control of yo
    
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+### Seed Test Data (Optional)
+
+To populate your database with realistic test data for 2025:
+
+```bash
+npm run seed
+```
+
+This will create:
+- 8 fixed expenses (rent, utilities, subscriptions, etc.)
+- 120+ monthly expenses across Jan-Oct with varied categories
+- 3 yearly expenses
+- 3 fixed expense overrides for realistic variations
+- Income data (₹40,000/month, ₹4,80,000/year)
+
+**Note**: The seed script will clear all existing 2025 data before populating new data.
+
 ### Build for Production
 
 ```bash
