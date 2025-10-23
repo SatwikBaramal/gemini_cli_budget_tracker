@@ -8,6 +8,7 @@ import Dashboard from '@/components/Dashboard';
 import YearSelector from '@/components/YearSelector';
 import SearchAndFilterPanel, { FilterState } from '@/components/SearchAndFilterPanel';
 import SearchResultsDisplay from '@/components/SearchResultsDisplay';
+import { GoalsSection } from '@/components/GoalsSection';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -195,6 +196,11 @@ export default function Home() {
           <div className="space-y-4">
             <Dashboard monthlyIncome={yearlyIncome / 12} expenses={expenses} />
           </div>
+        </div>
+
+        {/* Savings Goals Section */}
+        <div className="mt-6">
+          <GoalsSection />
         </div>
       </div>
     </main>
