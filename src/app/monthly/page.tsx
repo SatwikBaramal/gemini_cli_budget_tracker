@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,8 @@ import FixedExpensesManager from '@/components/FixedExpensesManager';
 import MonthNavigationGrid from '@/components/MonthNavigationGrid';
 import BudgetProgressBar from '@/components/BudgetProgressBar';
 import YearSelector from '@/components/YearSelector';
+import SearchAndFilterPanel, { FilterState } from '@/components/SearchAndFilterPanel';
+import SearchResultsDisplay from '@/components/SearchResultsDisplay';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { Pencil } from 'lucide-react';
 
@@ -61,6 +63,11 @@ export default function Monthly() {
   const [expenseToEdit, setExpenseToEdit] = useState<FixedExpense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1); // Current month (1-12)
   const [viewMode, setViewMode] = useState<'current' | 'all'>('current');
+  const [filters, setFilters] = useState<FilterState>({
+    searchQuery: '',
+    dateRange: { start: '', end: '' },
+    amountRange: { min: 0, max: 100000 },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,6 +93,13 @@ export default function Monthly() {
       setFixedExpenses(fixedData);
     };
     fetchData();
+    
+    // Reset filters when year changes
+    setFilters({
+      searchQuery: '',
+      dateRange: { start: '', end: '' },
+      amountRange: { min: 0, max: 100000 },
+    });
   }, [selectedYear]);
 
   const addExpense = async (monthNumber: number, expense: { name: string; amount: number }) => {
@@ -243,6 +257,70 @@ export default function Monthly() {
     })));
   };
 
+  // Flatten all expenses for filtering
+  const allExpenses = useMemo(() => {
+    const expenses: Expense[] = [];
+    MONTHS.forEach(month => {
+      const monthExpenses = expensesByMonth[month] || [];
+      expenses.push(...monthExpenses);
+    });
+    return expenses;
+  }, [expensesByMonth]);
+
+  // Filter expenses based on search and filter criteria
+  const filteredExpenses = useMemo(() => {
+    let result = [...allExpenses];
+
+    // Apply search query
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      result = result.filter(exp => exp.name.toLowerCase().includes(query));
+    }
+
+    // Apply date range filter
+    if (filters.dateRange.start || filters.dateRange.end) {
+      result = result.filter(exp => {
+        if (!exp.date) return false;
+        const expDate = new Date(exp.date);
+        const startDate = filters.dateRange.start ? new Date(filters.dateRange.start) : null;
+        const endDate = filters.dateRange.end ? new Date(filters.dateRange.end) : null;
+
+        if (startDate && expDate < startDate) return false;
+        if (endDate && expDate > endDate) return false;
+        return true;
+      });
+    }
+
+    // Apply amount range filter
+    if (filters.amountRange.min > 0 || filters.amountRange.max < 100000) {
+      result = result.filter(exp => 
+        exp.amount >= filters.amountRange.min && exp.amount <= filters.amountRange.max
+      );
+    }
+
+    return result;
+  }, [allExpenses, filters]);
+
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+  };
+
+  const hasActiveFilters = () => {
+    return (
+      filters.searchQuery !== '' ||
+      filters.dateRange.start !== '' ||
+      filters.dateRange.end !== '' ||
+      filters.amountRange.min !== 0 ||
+      filters.amountRange.max !== 100000
+    );
+  };
+
+  // Calculate max amount for slider
+  const maxAmount = useMemo(() => {
+    if (allExpenses.length === 0) return 100000;
+    return Math.max(...allExpenses.map(exp => exp.amount), 100000);
+  }, [allExpenses]);
+
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
@@ -315,6 +393,23 @@ export default function Monthly() {
             </div>
           </div>
         </div>
+
+        {/* Search and Filter Panel */}
+        <SearchAndFilterPanel
+          onFilterChange={handleFilterChange}
+          initialFilters={filters}
+          year={selectedYear}
+          maxAmount={maxAmount}
+        />
+
+        {/* Show search results if filters are active */}
+        {hasActiveFilters() && (
+          <SearchResultsDisplay
+            expenses={filteredExpenses}
+            title="Filtered Expenses"
+            showMonth={true}
+          />
+        )}
 
         {/* Conditional Rendering based on View Mode */}
         {viewMode === 'current' ? (
