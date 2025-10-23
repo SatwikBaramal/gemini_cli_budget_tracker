@@ -21,6 +21,22 @@ interface Expense {
   date?: string;
 }
 
+interface FixedExpenseAPI {
+  id: string;
+  name: string;
+  amount: number;
+  applicable_months: number[];
+  year: number;
+  overrides?: Array<{
+    id: string;
+    fixed_expense_id: string;
+    month: number;
+    override_amount: number;
+    date: string;
+    year: number;
+  }>;
+}
+
 type SortKey = 'name' | 'amount';
 
 export default function Home() {
@@ -40,17 +56,37 @@ export default function Home() {
       const incomeData = await incomeRes.json();
       setYearlyIncome(Number(incomeData.value));
 
-      // Fetch both yearly and monthly expenses for the selected year
-      const [yearlyRes, monthlyRes] = await Promise.all([
+      // Fetch yearly, monthly, and fixed expenses for the selected year
+      const [yearlyRes, monthlyRes, fixedRes] = await Promise.all([
         fetch(`/api/expenses?year=${selectedYear}`),
-        fetch(`/api/expenses/monthly?year=${selectedYear}`)
+        fetch(`/api/expenses/monthly?year=${selectedYear}`),
+        fetch(`/api/fixed-expenses?year=${selectedYear}`)
       ]);
       
       const yearlyExpenses = await yearlyRes.json();
       const monthlyExpenses = await monthlyRes.json();
+      const fixedExpenses = await fixedRes.json();
+
+      // Transform fixed expenses into individual expense entries for each applicable month
+      const expandedFixedExpenses: Expense[] = fixedExpenses.flatMap((fixed: FixedExpenseAPI) => {
+        return fixed.applicable_months.map((month: number) => {
+          // Check if there's an override for this month
+          const override = fixed.overrides?.find((o) => o.month === month);
+          const amount = override ? override.override_amount : fixed.amount;
+          
+          return {
+            id: `fixed-${fixed.id}-${month}`,
+            name: fixed.name,
+            amount: amount,
+            month: month,
+            type: 'fixed',
+            date: override?.date || `${selectedYear}-${String(month).padStart(2, '0')}-01`,
+          };
+        });
+      });
       
       // Combine all expenses for display
-      setExpenses([...yearlyExpenses, ...monthlyExpenses]);
+      setExpenses([...yearlyExpenses, ...monthlyExpenses, ...expandedFixedExpenses]);
     };
     fetchData();
     
