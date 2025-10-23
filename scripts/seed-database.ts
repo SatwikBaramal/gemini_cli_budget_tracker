@@ -352,34 +352,6 @@ async function seedMonthlyExpenses(Expense: any) {
   return created;
 }
 
-async function seedYearlyExpenses(Expense: any) {
-  console.log('📅 Creating yearly expenses...');
-  
-  const yearlyExpenses = [
-    {
-      name: 'Annual Health Insurance Premium',
-      amount: 8000,
-      type: 'yearly',
-      year: YEAR
-    },
-    {
-      name: 'Property Tax',
-      amount: 3500,
-      type: 'yearly',
-      year: YEAR
-    },
-    {
-      name: 'Professional License Renewal',
-      amount: 2000,
-      type: 'yearly',
-      year: YEAR
-    }
-  ];
-
-  const created = await Expense.insertMany(yearlyExpenses);
-  console.log(`✅ Created ${created.length} yearly expenses\n`);
-}
-
 async function seedIncomeData(Setting: any) {
   console.log('💵 Setting income data...');
   
