@@ -43,6 +43,8 @@ interface MonthlyExpenseSectionProps {
   onUnapplyFixedExpense: (fixedExpenseId: string, monthNumber: number) => void;
   onOverrideFixedExpense: (fixedExpenseId: string, month: number, overrideAmount: number) => void;
   onRevertOverride: (overrideId: string) => void;
+  baseMonthlyIncome?: number; // Optional: for showing override indicator
+  isIncomeOverridden?: boolean; // Optional: indicator if this month has custom income
 }
 
 const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
@@ -55,6 +57,8 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
   onUnapplyFixedExpense,
   onOverrideFixedExpense,
   onRevertOverride,
+  baseMonthlyIncome,
+  isIncomeOverridden = false,
 }) => {
   const [name, setName] = useState('');
   const [cost, setCost] = useState('');
@@ -275,6 +279,23 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
 
       {/* Summary */}
       <div className="pt-3 border-t border-gray-200">
+        {isIncomeOverridden && baseMonthlyIncome && (
+          <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                  Custom Income
+                </span>
+                <span className="text-gray-600">
+                  Base: <span className="line-through">{formatCurrency(baseMonthlyIncome)}</span>
+                </span>
+              </div>
+              <span className="font-semibold text-green-700">
+                This Month: {formatCurrency(monthlyIncome)}
+              </span>
+            </div>
+          </div>
+        )}
         {fixedExpenses.length > 0 && (
           <div className="flex justify-between items-center text-sm text-blue-700 mb-1">
             <span className="font-medium">Fixed Expenses:</span>

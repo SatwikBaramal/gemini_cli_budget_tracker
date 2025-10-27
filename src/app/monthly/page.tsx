@@ -23,8 +23,9 @@ import BudgetProgressBar from '@/components/BudgetProgressBar';
 import YearSelector from '@/components/YearSelector';
 import SearchAndFilterPanel, { FilterState } from '@/components/SearchAndFilterPanel';
 import SearchResultsDisplay from '@/components/SearchResultsDisplay';
+import MonthlyIncomeOverrideDialog from '@/components/MonthlyIncomeOverrideDialog';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
-import { Pencil } from 'lucide-react';
+import { Pencil, DollarSign, Loader2 } from 'lucide-react';
 
 interface Expense {
   id: string;
@@ -51,11 +52,20 @@ interface FixedExpense {
   overrides?: FixedExpenseOverride[];
 }
 
+interface MonthlyIncomeOverride {
+  id: string;
+  month: number;
+  year: number;
+  override_amount: number;
+  date: string;
+}
+
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function Monthly() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [incomeOverrides, setIncomeOverrides] = useState<MonthlyIncomeOverride[]>([]);
   const [expensesByMonth, setExpensesByMonth] = useState<{ [key: number]: Expense[] }>({});
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -63,6 +73,7 @@ export default function Monthly() {
   const [expenseToEdit, setExpenseToEdit] = useState<FixedExpense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1); // Current month (1-12)
   const [viewMode, setViewMode] = useState<'current' | 'all'>('current');
+  const [isLoadingIncomeData, setIsLoadingIncomeData] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     dateRange: { start: '', end: '' },
@@ -75,6 +86,11 @@ export default function Monthly() {
       const incomeRes = await fetch(`/api/income/monthly?year=${selectedYear}`);
       const incomeData = await incomeRes.json();
       setMonthlyIncome(Number(incomeData.value));
+
+      // Fetch income overrides for the selected year
+      const overridesRes = await fetch(`/api/income/monthly/overrides?year=${selectedYear}`);
+      const overridesData: MonthlyIncomeOverride[] = await overridesRes.json();
+      setIncomeOverrides(overridesData);
 
       // Fetch all monthly expenses for the selected year
       const expensesRes = await fetch(`/api/expenses/monthly?year=${selectedYear}`);
@@ -127,6 +143,34 @@ export default function Monthly() {
       ...prev,
       [monthNumber]: (prev[monthNumber] || []).filter(expense => expense.id !== id),
     }));
+  };
+
+  // Helper function to get income for a specific month (with override if exists)
+  const getIncomeForMonth = (monthNumber: number): number => {
+    const override = incomeOverrides.find(o => o.month === monthNumber);
+    return override ? override.override_amount : monthlyIncome;
+  };
+
+  // Handler to refetch overrides when they change
+  const handleIncomeOverrideChange = async (data?: MonthlyIncomeOverride[]) => {
+    setIsLoadingIncomeData(true);
+    try {
+      if (data) {
+        // Use provided data directly (from API response)
+        setIncomeOverrides(data);
+      } else {
+        // Fetch from API (for initial page load)
+        const overridesRes = await fetch(`/api/income/monthly/overrides?year=${selectedYear}`, {
+          cache: 'no-store'
+        });
+        const overridesData: MonthlyIncomeOverride[] = await overridesRes.json();
+        setIncomeOverrides(overridesData);
+      }
+    } catch (error) {
+      console.error('Error fetching income overrides:', error);
+    } finally {
+      setIsLoadingIncomeData(false);
+    }
   };
 
   const getTotalSpentForMonth = (monthNumber: number): number => {
@@ -345,11 +389,24 @@ export default function Monthly() {
         </div>
 
         {/* Income Display */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6 relative">
+          {isLoadingIncomeData && (
+            <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center z-10">
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Updating income data...</span>
+              </div>
+            </div>
+          )}
           <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700">Monthly Income:</span>
+            <span className="text-lg font-semibold text-gray-700">Base Monthly Income:</span>
             <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-green-600">{formatCurrency(monthlyIncome)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-green-600">{formatCurrency(monthlyIncome)}</span>
+                {isLoadingIncomeData && (
+                  <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+                )}
+              </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -359,14 +416,14 @@ export default function Monthly() {
                     className="gap-2"
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit
+                    Edit Base
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>Edit Monthly Income</DialogTitle>
+                    <DialogTitle>Edit Base Monthly Income</DialogTitle>
                     <DialogDescription>
-                      Update your monthly income amount. This will affect all month calculations.
+                      Update your base monthly income amount. This will be the default for all months unless overridden.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -390,6 +447,12 @@ export default function Monthly() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              <MonthlyIncomeOverrideDialog
+                baseMonthlyIncome={monthlyIncome}
+                year={selectedYear}
+                overrides={incomeOverrides}
+                onOverrideChange={handleIncomeOverrideChange}
+              />
             </div>
           </div>
         </div>
@@ -415,7 +478,12 @@ export default function Monthly() {
         {viewMode === 'current' ? (
           <>
             {/* Current Month Expenses - Prominent Display */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6 relative">
+              {isLoadingIncomeData && (
+                <div className="absolute inset-0 bg-white/60 rounded-lg flex items-center justify-center z-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              )}
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-900">
                   {getMonthName(selectedMonth)} Expenses
@@ -423,8 +491,8 @@ export default function Monthly() {
                 <div className="text-sm text-gray-600">
                   Spent: <span className="font-semibold text-red-600">{formatCurrency(getTotalSpentForMonth(selectedMonth))}</span>
                   {' | '}
-                  Remaining: <span className={`font-semibold ${(monthlyIncome - getTotalSpentForMonth(selectedMonth)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(monthlyIncome - getTotalSpentForMonth(selectedMonth))}
+                  Remaining: <span className={`font-semibold ${(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth))}
                   </span>
                 </div>
               </div>
@@ -432,7 +500,7 @@ export default function Monthly() {
               {/* Progress Bar */}
               <div className="mb-4">
                 <BudgetProgressBar
-                  income={monthlyIncome}
+                  income={getIncomeForMonth(selectedMonth)}
                   spent={getTotalSpentForMonth(selectedMonth)}
                 />
               </div>
@@ -440,7 +508,7 @@ export default function Monthly() {
               <MonthlyExpenseSection
                 monthNumber={selectedMonth}
                 monthName={getMonthName(selectedMonth)}
-                monthlyIncome={monthlyIncome}
+                monthlyIncome={getIncomeForMonth(selectedMonth)}
                 expenses={expensesByMonth[selectedMonth] || []}
                 fixedExpenses={getFixedExpensesForMonth(selectedMonth)}
                 onAddExpense={addExpense}
@@ -448,6 +516,8 @@ export default function Monthly() {
                 onUnapplyFixedExpense={handleUnapplyFixedExpense}
                 onOverrideFixedExpense={handleOverrideFixedExpense}
                 onRevertOverride={handleRevertOverride}
+                baseMonthlyIncome={monthlyIncome}
+                isIncomeOverridden={!!incomeOverrides.find(o => o.month === selectedMonth)}
               />
             </div>
 
@@ -464,16 +534,23 @@ export default function Monthly() {
             </div>
 
             {/* Month Navigation Grid */}
-            <MonthNavigationGrid
-              months={MONTHS}
-              selectedMonth={selectedMonth}
-              onMonthSelect={setSelectedMonth}
-              getMonthData={(month) => ({
-                name: getMonthName(month),
-                spent: getTotalSpentForMonth(month),
-                remaining: monthlyIncome - getTotalSpentForMonth(month)
-              })}
-            />
+            <div className="relative">
+              {isLoadingIncomeData && (
+                <div className="absolute inset-0 bg-white/60 rounded-lg flex items-center justify-center z-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              )}
+              <MonthNavigationGrid
+                months={MONTHS}
+                selectedMonth={selectedMonth}
+                onMonthSelect={setSelectedMonth}
+                getMonthData={(month) => ({
+                  name: getMonthName(month),
+                  spent: getTotalSpentForMonth(month),
+                  remaining: getIncomeForMonth(month) - getTotalSpentForMonth(month)
+                })}
+              />
+            </div>
 
             {/* Toggle Button to All Months View */}
             <div className="flex justify-center mt-6">
@@ -514,7 +591,8 @@ export default function Monthly() {
                   const monthName = getMonthName(monthNumber);
                   const expenses = expensesByMonth[monthNumber] || [];
                   const totalSpent = getTotalSpentForMonth(monthNumber);
-                  const remaining = monthlyIncome - totalSpent;
+                  const monthIncome = getIncomeForMonth(monthNumber);
+                  const remaining = monthIncome - totalSpent;
 
                   return (
                     <AccordionItem key={monthNumber} value={`month-${monthNumber}`}>
@@ -535,7 +613,7 @@ export default function Monthly() {
                         <MonthlyExpenseSection
                           monthNumber={monthNumber}
                           monthName={monthName}
-                          monthlyIncome={monthlyIncome}
+                          monthlyIncome={monthIncome}
                           expenses={expenses}
                           fixedExpenses={getFixedExpensesForMonth(monthNumber)}
                           onAddExpense={addExpense}
@@ -543,6 +621,8 @@ export default function Monthly() {
                           onUnapplyFixedExpense={handleUnapplyFixedExpense}
                           onOverrideFixedExpense={handleOverrideFixedExpense}
                           onRevertOverride={handleRevertOverride}
+                          baseMonthlyIncome={monthlyIncome}
+                          isIncomeOverridden={!!incomeOverrides.find(o => o.month === monthNumber)}
                         />
                       </AccordionContent>
                     </AccordionItem>
