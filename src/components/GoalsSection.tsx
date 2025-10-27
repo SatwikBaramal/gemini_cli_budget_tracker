@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GoalCard } from './GoalCard';
 import { AddGoalDialog, GoalFormData } from './AddGoalDialog';
-import { AddContributionDialog, ContributionData } from './AddContributionDialog';
+import { ManageSavingsDialog, TransactionData } from './ManageSavingsDialog';
 import { ContributionHistoryDialog } from './ContributionHistoryDialog';
 import { CoinLoadingAnimation } from './CoinLoadingAnimation';
 
@@ -21,6 +21,7 @@ interface Goal {
     amount: number;
     date: string;
     note?: string;
+    type: 'addition' | 'withdrawal';
   }>;
 }
 
@@ -32,8 +33,8 @@ export const GoalsSection: React.FC = () => {
   // Dialog states
   const [addGoalDialogOpen, setAddGoalDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-  const [addContributionDialogOpen, setAddContributionDialogOpen] = useState(false);
-  const [selectedGoalForContribution, setSelectedGoalForContribution] = useState<Goal | null>(null);
+  const [manageSavingsDialogOpen, setManageSavingsDialogOpen] = useState(false);
+  const [selectedGoalForTransaction, setSelectedGoalForTransaction] = useState<Goal | null>(null);
   const [viewHistoryDialogOpen, setViewHistoryDialogOpen] = useState(false);
   const [selectedGoalForHistory, setSelectedGoalForHistory] = useState<Goal | null>(null);
 
@@ -96,15 +97,15 @@ export const GoalsSection: React.FC = () => {
     }
   };
 
-  // Handle add contribution
-  const handleAddContribution = async (contribution: ContributionData) => {
-    if (!selectedGoalForContribution) return;
+  // Handle transaction (addition or withdrawal)
+  const handleTransaction = async (transaction: TransactionData) => {
+    if (!selectedGoalForTransaction) return;
 
     try {
-      const response = await fetch(`/api/goals/${selectedGoalForContribution._id}`, {
+      const response = await fetch(`/api/goals/${selectedGoalForTransaction._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contribution }),
+        body: JSON.stringify({ contribution: transaction }),
       });
 
       if (response.ok) {
@@ -112,10 +113,14 @@ export const GoalsSection: React.FC = () => {
         setGoals((prev) =>
           prev.map((g) => (g._id === updatedGoal._id ? updatedGoal : g))
         );
-        setSelectedGoalForContribution(null);
+        setSelectedGoalForTransaction(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to process transaction');
+        throw new Error(error.error);
       }
     } catch (error) {
-      console.error('Error adding contribution:', error);
+      console.error('Error processing transaction:', error);
       throw error;
     }
   };
@@ -206,8 +211,8 @@ export const GoalsSection: React.FC = () => {
                 onAddContribution={(goalId) => {
                   const goal = goals.find((g) => g._id === goalId);
                   if (goal) {
-                    setSelectedGoalForContribution(goal);
-                    setAddContributionDialogOpen(true);
+                    setSelectedGoalForTransaction(goal);
+                    setManageSavingsDialogOpen(true);
                   }
                 }}
                 onViewHistory={(goalId) => {
@@ -243,14 +248,15 @@ export const GoalsSection: React.FC = () => {
         editGoal={editingGoal}
       />
 
-      <AddContributionDialog
-        open={addContributionDialogOpen}
+      <ManageSavingsDialog
+        open={manageSavingsDialogOpen}
         onOpenChange={(open) => {
-          setAddContributionDialogOpen(open);
-          if (!open) setSelectedGoalForContribution(null);
+          setManageSavingsDialogOpen(open);
+          if (!open) setSelectedGoalForTransaction(null);
         }}
-        goalName={selectedGoalForContribution?.name || ''}
-        onSave={handleAddContribution}
+        goalName={selectedGoalForTransaction?.name || ''}
+        currentAmount={selectedGoalForTransaction?.currentAmount || 0}
+        onSave={handleTransaction}
       />
 
       <ContributionHistoryDialog

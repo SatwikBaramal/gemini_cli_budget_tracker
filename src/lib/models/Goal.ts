@@ -4,6 +4,7 @@ export interface IContribution {
   amount: number;
   date: string;
   note?: string;
+  type: 'addition' | 'withdrawal';
 }
 
 export interface IGoal {
@@ -21,6 +22,7 @@ const ContributionSchema = new Schema<IContribution>({
   amount: { type: Number, required: true },
   date: { type: String, required: true },
   note: { type: String },
+  type: { type: String, required: true, enum: ['addition', 'withdrawal'], default: 'addition' },
 }, { _id: false });
 
 const GoalSchema = new Schema<IGoal>({

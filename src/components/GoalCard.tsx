@@ -16,6 +16,7 @@ interface Goal {
     amount: number;
     date: string;
     note?: string;
+    type: 'addition' | 'withdrawal';
   }>;
 }
 
@@ -64,18 +65,31 @@ export const GoalCard: React.FC<GoalCardProps> = ({
     return null;
   };
 
-  // Determine progress bar color
+  // Determine progress bar color with gradient effect
   const getProgressColor = () => {
-    if (goal.status === 'completed' || progressPercentage >= 100) {
-      return '#22c55e'; // green-500
-    }
-    if (daysRemaining < 0) {
+    // If overdue, always show red
+    if (daysRemaining < 0 && goal.status !== 'completed') {
       return '#ef4444'; // red-500
     }
-    if (daysRemaining < 30) {
+
+    // Create gradient from red → orange → yellow → light green → dark green based on progress
+    const progress = Math.min(progressPercentage, 100);
+    
+    if (progress >= 100) {
+      return '#15803d'; // green-700 - Completed (dark green)
+    } else if (progress >= 75) {
+      // 75-100%: Dark green
+      return '#16a34a'; // green-600
+    } else if (progress >= 50) {
+      // 50-75%: Medium green
+      return '#22c55e'; // green-500
+    } else if (progress >= 25) {
+      // 25-50%: Yellow
       return '#eab308'; // yellow-500
+    } else {
+      // 0-25%: Orange
+      return '#f97316'; // orange-500
     }
-    return '#3b82f6'; // blue-500
   };
 
   const formatDate = (dateString: string) => {
@@ -136,13 +150,13 @@ export const GoalCard: React.FC<GoalCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2 pt-2">
-          {goal.status === 'active' && (
+          {goal.status !== 'archived' && (
             <Button
               size="sm"
               onClick={() => onAddContribution(goal._id)}
               className="flex-1 min-w-[120px]"
             >
-              Add Savings
+              Manage Savings
             </Button>
           )}
           <Button

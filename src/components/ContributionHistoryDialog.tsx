@@ -19,6 +19,7 @@ interface Contribution {
   amount: number;
   date: string;
   note?: string;
+  type: 'addition' | 'withdrawal';
 }
 
 interface ContributionHistoryDialogProps {
@@ -39,11 +40,16 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
-  // Calculate total contributions
-  const totalContributions = contributions.reduce(
-    (sum, contribution) => sum + contribution.amount,
-    0
-  );
+  // Calculate net contributions (additions - withdrawals)
+  const totalAdditions = contributions
+    .filter((c) => c.type === 'addition')
+    .reduce((sum, contribution) => sum + contribution.amount, 0);
+  
+  const totalWithdrawals = contributions
+    .filter((c) => c.type === 'withdrawal')
+    .reduce((sum, contribution) => sum + contribution.amount, 0);
+  
+  const netContributions = totalAdditions - totalWithdrawals;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -61,11 +67,27 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
         </DialogHeader>
         <div className="space-y-4">
           {/* Total Summary */}
-          <div className="bg-gray-100 p-4 rounded-md">
-            <p className="text-sm text-gray-600">Total Contributions</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalContributions)}</p>
-            <p className="text-sm text-gray-500 mt-1">
-              {contributions.length} contribution{contributions.length !== 1 ? 's' : ''}
+          <div className="bg-gray-100 p-4 rounded-md space-y-2">
+            <div>
+              <p className="text-sm text-gray-600">Net Savings</p>
+              <p className="text-2xl font-bold">{formatCurrency(netContributions)}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+              <div>
+                <p className="text-xs text-gray-600">Total Added</p>
+                <p className="text-sm font-semibold text-green-600">
+                  +{formatCurrency(totalAdditions)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Total Withdrawn</p>
+                <p className="text-sm font-semibold text-red-600">
+                  -{formatCurrency(totalWithdrawals)}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 pt-2">
+              {contributions.length} transaction{contributions.length !== 1 ? 's' : ''}
             </p>
           </div>
 
@@ -76,6 +98,7 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Note</TableHead>
                   </TableRow>
@@ -84,7 +107,25 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
                   {sortedContributions.map((contribution, index) => (
                     <TableRow key={index}>
                       <TableCell>{formatDate(contribution.date)}</TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell>
+                        <span
+                          className={`text-xs font-medium px-2 py-1 rounded ${
+                            contribution.type === 'addition'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {contribution.type === 'addition' ? 'Added' : 'Withdrawn'}
+                        </span>
+                      </TableCell>
+                      <TableCell
+                        className={`font-medium ${
+                          contribution.type === 'addition'
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {contribution.type === 'addition' ? '+' : '-'}
                         {formatCurrency(contribution.amount)}
                       </TableCell>
                       <TableCell className="text-gray-600">

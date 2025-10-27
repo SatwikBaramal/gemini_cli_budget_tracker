@@ -51,33 +51,64 @@ export async function PATCH(
       return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
-    // Check if this is a contribution addition
+    // Check if this is a contribution (addition or withdrawal)
     if (body.contribution) {
-      const { amount, date, note } = body.contribution;
+      const { amount, date, note, type } = body.contribution;
+
+      // Reject modifications to archived goals
+      if (goal.status === 'archived') {
+        return NextResponse.json(
+          { error: 'Cannot modify archived goals' },
+          { status: 400 }
+        );
+      }
 
       if (!amount || amount <= 0) {
         return NextResponse.json(
-          { error: 'Contribution amount must be positive' },
+          { error: 'Amount must be positive' },
           { status: 400 }
         );
       }
 
       if (!date) {
         return NextResponse.json(
-          { error: 'Contribution date is required' },
+          { error: 'Date is required' },
           { status: 400 }
         );
       }
 
-      // Add contribution to history
-      goal.contributions.push({ amount, date, note });
-      
-      // Update current amount
-      goal.currentAmount += amount;
+      if (!type || !['addition', 'withdrawal'].includes(type)) {
+        return NextResponse.json(
+          { error: 'Transaction type must be "addition" or "withdrawal"' },
+          { status: 400 }
+        );
+      }
 
-      // Update status if goal is completed
+      // Validate withdrawal doesn't exceed current amount
+      if (type === 'withdrawal') {
+        if (amount > goal.currentAmount) {
+          return NextResponse.json(
+            { error: `Cannot withdraw more than available balance (₹${goal.currentAmount})` },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Add transaction to history
+      goal.contributions.push({ amount, date, note, type });
+      
+      // Update current amount based on transaction type
+      if (type === 'addition') {
+        goal.currentAmount += amount;
+      } else {
+        goal.currentAmount -= amount;
+      }
+
+      // Update status based on new amount
       if (goal.currentAmount >= goal.targetAmount && goal.status === 'active') {
         goal.status = 'completed';
+      } else if (goal.currentAmount < goal.targetAmount && goal.status === 'completed') {
+        goal.status = 'active';
       }
 
       await goal.save();

@@ -9,27 +9,32 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatCurrency } from '@/lib/formatters';
 
-interface AddContributionDialogProps {
+interface ManageSavingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   goalName: string;
-  onSave: (contribution: ContributionData) => Promise<void>;
+  currentAmount: number;
+  onSave: (transaction: TransactionData) => Promise<void>;
 }
 
-export interface ContributionData {
+export interface TransactionData {
   amount: number;
   date: string;
   note?: string;
+  type: 'addition' | 'withdrawal';
 }
 
-export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
+export const ManageSavingsDialog: React.FC<ManageSavingsDialogProps> = ({
   open,
   onOpenChange,
   goalName,
+  currentAmount,
   onSave,
 }) => {
-  const [formData, setFormData] = useState<ContributionData>({
+  const [transactionType, setTransactionType] = useState<'addition' | 'withdrawal'>('addition');
+  const [formData, setFormData] = useState<Omit<TransactionData, 'type'>>({
     amount: 0,
     date: new Date().toISOString().split('T')[0],
     note: '',
@@ -40,6 +45,7 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
+      setTransactionType('addition');
       setFormData({
         amount: 0,
         date: new Date().toISOString().split('T')[0],
@@ -54,6 +60,10 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
 
     if (!formData.amount || formData.amount <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
+    }
+
+    if (transactionType === 'withdrawal' && formData.amount > currentAmount) {
+      newErrors.amount = `Cannot withdraw more than available balance (${formatCurrency(currentAmount)})`;
     }
 
     if (!formData.date) {
@@ -73,16 +83,19 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        type: transactionType,
+      });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error adding contribution:', error);
+      console.error('Error processing transaction:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleChange = (field: keyof ContributionData, value: string | number) => {
+  const handleChange = (field: keyof typeof formData, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -101,19 +114,53 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Add Savings to &quot;{goalName}&quot;</DialogTitle>
+          <DialogTitle>Manage Savings - &quot;{goalName}&quot;</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
+            {/* Transaction Type Toggle */}
+            <div className="space-y-2">
+              <Label>Transaction Type</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={transactionType === 'addition' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => setTransactionType('addition')}
+                >
+                  Add Savings
+                </Button>
+                <Button
+                  type="button"
+                  variant={transactionType === 'withdrawal' ? 'default' : 'outline'}
+                  className="flex-1"
+                  onClick={() => setTransactionType('withdrawal')}
+                >
+                  Withdraw Savings
+                </Button>
+              </div>
+            </div>
+
+            {/* Available Balance (for withdrawals) */}
+            {transactionType === 'withdrawal' && (
+              <div className="bg-blue-50 p-3 rounded-md">
+                <p className="text-sm text-blue-900">
+                  <span className="font-semibold">Available to withdraw:</span>{' '}
+                  {formatCurrency(currentAmount)}
+                </p>
+              </div>
+            )}
+
             {/* Amount */}
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (₹) *</Label>
               <Input
                 id="amount"
                 type="number"
-                placeholder="5000"
+                placeholder={transactionType === 'addition' ? '5000' : '1000'}
                 min="1"
                 step="1"
+                max={transactionType === 'withdrawal' ? currentAmount : undefined}
                 value={formData.amount || ''}
                 onChange={(e) =>
                   handleChange('amount', parseFloat(e.target.value) || 0)
@@ -142,16 +189,18 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
               )}
             </div>
 
-            {/* Note (Optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="note">Note (Optional)</Label>
-              <Input
-                id="note"
-                placeholder="e.g., Monthly savings"
-                value={formData.note}
-                onChange={(e) => handleChange('note', e.target.value)}
-              />
-            </div>
+            {/* Note (Only for additions) */}
+            {transactionType === 'addition' && (
+              <div className="space-y-2">
+                <Label htmlFor="note">Note (Optional)</Label>
+                <Input
+                  id="note"
+                  placeholder="e.g., Monthly savings"
+                  value={formData.note}
+                  onChange={(e) => handleChange('note', e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -164,7 +213,11 @@ export const AddContributionDialog: React.FC<AddContributionDialogProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Savings'}
+              {isSubmitting
+                ? 'Processing...'
+                : transactionType === 'addition'
+                ? 'Add Savings'
+                : 'Withdraw Savings'}
             </Button>
           </DialogFooter>
         </form>
