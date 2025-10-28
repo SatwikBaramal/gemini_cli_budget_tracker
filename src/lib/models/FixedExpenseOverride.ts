@@ -6,6 +6,7 @@ export interface IFixedExpenseOverride {
   overrideAmount: number;
   date: string;
   year: number;
+  userId: string;
 }
 
 const FixedExpenseOverrideSchema = new Schema<IFixedExpenseOverride>({
@@ -14,12 +15,13 @@ const FixedExpenseOverrideSchema = new Schema<IFixedExpenseOverride>({
   overrideAmount: { type: Number, required: true },
   date: { type: String, required: true },
   year: { type: Number, required: true },
+  userId: { type: String, required: true, index: true },
 }, {
   timestamps: true,
 });
 
 // Create compound index for efficient lookups
-FixedExpenseOverrideSchema.index({ fixedExpenseId: 1, month: 1, year: 1 });
+FixedExpenseOverrideSchema.index({ userId: 1, fixedExpenseId: 1, month: 1, year: 1 });
 
-export const FixedExpenseOverride: Model<IFixedExpenseOverride> = mongoose.models.FixedExpenseOverride || mongoose.model<IFixedExpenseOverride>('FixedExpenseOverride', FixedExpenseOverrideSchema);
+export const FixedExpenseOverride: Model<IFixedExpenseOverride> = (mongoose.models?.FixedExpenseOverride as Model<IFixedExpenseOverride>) || mongoose.model<IFixedExpenseOverride>('FixedExpenseOverride', FixedExpenseOverrideSchema);
 

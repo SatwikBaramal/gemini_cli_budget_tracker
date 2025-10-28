@@ -1,14 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { MonthlyIncomeOverride } from '@/lib/models/MonthlyIncomeOverride';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    const overrides = await MonthlyIncomeOverride.find({ year });
+    const overrides = await MonthlyIncomeOverride.find({ userId, year });
     
     return NextResponse.json(
       overrides.map(override => ({
@@ -30,15 +37,22 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { month, override_amount, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
     const date = new Date().toISOString();
     
-    // Check if override already exists for this month and year
+    // Check if override already exists for this user, month and year
     const existing = await MonthlyIncomeOverride.findOne({
+      userId,
       month,
       year: yearToUse
     });
@@ -51,6 +65,7 @@ export async function POST(request: Request) {
     } else {
       // Create new override
       await MonthlyIncomeOverride.create({
+        userId,
         month,
         overrideAmount: override_amount,
         date,
@@ -58,8 +73,8 @@ export async function POST(request: Request) {
       });
     }
     
-    // Fetch and return all overrides for the year
-    const allOverrides = await MonthlyIncomeOverride.find({ year: yearToUse });
+    // Fetch and return all overrides for the user and year
+    const allOverrides = await MonthlyIncomeOverride.find({ userId, year: yearToUse });
     
     return NextResponse.json({
       success: true,

@@ -316,7 +316,7 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
             <h4 className="font-semibold text-sm text-blue-900 mb-2">💡 Tip</h4>
             <p className="text-xs text-blue-800">
               Use this feature when you have irregular income, bonuses, or any month-specific changes to your regular income.
-              For example, if you receive a bonus in November, you can increase that month's income accordingly.
+              For example, if you receive a bonus in November, you can increase that month&apos;s income accordingly.
             </p>
           </div>
         </div>

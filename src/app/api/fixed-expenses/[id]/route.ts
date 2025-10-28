@@ -1,18 +1,31 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
     const { name, amount, applicable_months, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
     
+    // Verify ownership before update
+    const fixedExpense = await FixedExpense.findOne({ _id: id, userId });
+    if (!fixedExpense) {
+      return NextResponse.json({ error: 'Fixed expense not found' }, { status: 404 });
+    }
+
     await FixedExpense.findByIdAndUpdate(id, {
       name,
       amount,
@@ -34,20 +47,32 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    // Delete the fixed expense (with year safety check)
-    await FixedExpense.findOneAndDelete({ _id: id, year });
+    // Verify ownership before delete
+    const fixedExpense = await FixedExpense.findOne({ _id: id, userId, year });
+    if (!fixedExpense) {
+      return NextResponse.json({ error: 'Fixed expense not found' }, { status: 404 });
+    }
+
+    // Delete the fixed expense
+    await FixedExpense.findOneAndDelete({ _id: id, userId, year });
     
-    // Delete all related overrides for this year
-    await FixedExpenseOverride.deleteMany({ fixedExpenseId: id, year });
+    // Delete all related overrides for this user and year
+    await FixedExpenseOverride.deleteMany({ userId, fixedExpenseId: id, year });
     
     return NextResponse.json({ success: true });
   } catch (error) {

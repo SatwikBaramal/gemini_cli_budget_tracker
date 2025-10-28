@@ -1,18 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    const fixedExpenses = await FixedExpense.find({ year }).lean();
+    const fixedExpenses = await FixedExpense.find({ userId, year }).lean();
     
-    // Fetch all overrides for the specified year
-    const allOverrides = await FixedExpenseOverride.find({ year }).lean();
+    // Fetch all overrides for the specified year and user
+    const allOverrides = await FixedExpenseOverride.find({ userId, year }).lean();
     
     // Attach overrides to each fixed expense
     const parsed = fixedExpenses.map(expense => {
@@ -47,8 +54,14 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { name, amount, applicable_months, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
@@ -57,7 +70,8 @@ export async function POST(request: Request) {
       name,
       amount,
       applicableMonths: applicable_months,
-      year: yearToUse
+      year: yearToUse,
+      userId
     });
     
     return NextResponse.json({ 

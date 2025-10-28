@@ -1,16 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { fixed_expense_id, month, override_amount, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
     const date = new Date().toISOString();
     
-    // Check if override already exists for this fixed expense, month, and year
+    // Check if override already exists for this fixed expense, month, and year for this user
     const existing = await FixedExpenseOverride.findOne({
+      userId,
       fixedExpenseId: fixed_expense_id,
       month,
       year: yearToUse
@@ -33,6 +41,7 @@ export async function POST(request: Request) {
     } else {
       // Create new override
       const override = await FixedExpenseOverride.create({
+        userId,
         fixedExpenseId: fixed_expense_id,
         month,
         overrideAmount: override_amount,

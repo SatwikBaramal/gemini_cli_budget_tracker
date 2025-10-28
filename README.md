@@ -73,6 +73,7 @@ A powerful, modern budget tracking application that helps you take control of yo
 ### Prerequisites
 - Node.js 18+ and npm
 - MongoDB instance (local or cloud)
+- Google account for OAuth setup (free, optional for Google sign-in)
 - GitHub Token for AI features (optional)
 
 ### Installation
@@ -92,9 +93,31 @@ A powerful, modern budget tracking application that helps you take control of yo
    
    Create a `.env.local` file in the root directory:
    ```env
+   # MongoDB
    MONGODB_URI=your_mongodb_connection_string
+   
+   # NextAuth Configuration (completely free!)
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=generate_random_32char_string
+   
+   # Google OAuth (optional - for Google sign-in)
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   
+   # AI Features (optional)
    GITHUB_TOKEN=your_github_token_for_ai_features
    ```
+   
+   **Generate NEXTAUTH_SECRET**:
+   ```bash
+   # Using OpenSSL
+   openssl rand -base64 32
+   
+   # Or using Node.js
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+   ```
+   
+   **Setup Google OAuth** (optional): See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed Google OAuth setup instructions. You can skip this if you only want email/password authentication.
 
 4. **Run the development server**
    ```bash

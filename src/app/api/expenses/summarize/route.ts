@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Setting } from '@/lib/models/Setting';
 import { Expense } from '@/lib/models/Expense';
@@ -12,6 +13,12 @@ const model = "openai/gpt-4.1-nano";   //can change to gpt-5-chat if needed, cur
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     const { messages } = await req.json();
 
     if (!messages) {
@@ -20,14 +27,14 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    // Fetch all data in parallel to provide context to the chatbot
+    // Fetch all data in parallel to provide context to the chatbot - filtered by userId
     const [yearlyIncomeRes, monthlyIncomeRes, yearlyExpenses, monthlyExpenses, fixedExpenses, fixedOverrides] = await Promise.all([
-      Setting.findOne({ key: 'yearlyIncome' }).lean(),
-      Setting.findOne({ key: 'monthlyIncome' }).lean(),
-      Expense.find({ type: 'yearly' }).lean(),
-      Expense.find({ type: 'monthly' }).sort({ month: 1, date: -1 }).lean(),
-      FixedExpense.find().lean(),
-      FixedExpenseOverride.find().lean(),
+      Setting.findOne({ userId, key: 'yearlyIncome' }).lean(),
+      Setting.findOne({ userId, key: 'monthlyIncome' }).lean(),
+      Expense.find({ userId, type: 'yearly' }).lean(),
+      Expense.find({ userId, type: 'monthly' }).sort({ month: 1, date: -1 }).lean(),
+      FixedExpense.find({ userId }).lean(),
+      FixedExpenseOverride.find({ userId }).lean(),
     ]);
 
     const yearlyIncome = Number(yearlyIncomeRes?.value) || 0;

@@ -1,18 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    const override = await FixedExpenseOverride.findOne({ _id: id, year });
+    const override = await FixedExpenseOverride.findOne({ _id: id, userId, year });
     
     if (!override) {
       return NextResponse.json({ error: 'Override not found' }, { status: 404 });
@@ -26,17 +33,28 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    // Delete with year safety check
-    await FixedExpenseOverride.findOneAndDelete({ _id: id, year });
+    // Verify ownership before delete
+    const override = await FixedExpenseOverride.findOne({ _id: id, userId, year });
+    if (!override) {
+      return NextResponse.json({ error: 'Override not found' }, { status: 404 });
+    }
+
+    await FixedExpenseOverride.findOneAndDelete({ _id: id, userId, year });
     
     return NextResponse.json({ success: true });
   } catch (error) {

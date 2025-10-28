@@ -47,5 +47,5 @@ const GoalSchema = new Schema<IGoal>({
 GoalSchema.index({ userId: 1, status: 1 });
 GoalSchema.index({ deadline: 1 });
 
-export const Goal: Model<IGoal> = mongoose.models.Goal || mongoose.model<IGoal>('Goal', GoalSchema);
+export const Goal: Model<IGoal> = (mongoose.models?.Goal as Model<IGoal>) || mongoose.model<IGoal>('Goal', GoalSchema);
 

@@ -1,18 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/lib/models/Expense';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     
-    const expense = await Expense.findOne({ _id: id, year });
+    const expense = await Expense.findOne({ _id: id, userId, year });
     
     if (!expense) {
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
@@ -34,14 +41,30 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await connectToDatabase();
-  const { id } = await params;
-  const { searchParams } = new URL(request.url);
-  const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
-  
-  await Expense.findOneAndDelete({ _id: id, type: 'yearly', year });
-  return NextResponse.json({ message: `Expense ${id} deleted` });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.user.id;
+
+    await connectToDatabase();
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+    
+    const expense = await Expense.findOne({ _id: id, userId, type: 'yearly', year });
+    if (!expense) {
+      return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
+    }
+
+    await Expense.findOneAndDelete({ _id: id, userId, type: 'yearly', year });
+    return NextResponse.json({ message: `Expense ${id} deleted` });
+  } catch (error) {
+    console.error('Error deleting expense:', error);
+    return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 });
+  }
 }

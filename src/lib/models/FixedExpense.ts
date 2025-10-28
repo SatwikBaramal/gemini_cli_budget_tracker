@@ -5,6 +5,7 @@ export interface IFixedExpense {
   amount: number;
   applicableMonths: number[];
   year: number;
+  userId: string;
 }
 
 const FixedExpenseSchema = new Schema<IFixedExpense>({
@@ -12,12 +13,13 @@ const FixedExpenseSchema = new Schema<IFixedExpense>({
   amount: { type: Number, required: true },
   applicableMonths: { type: [Number], required: true },
   year: { type: Number, required: true },
+  userId: { type: String, required: true, index: true },
 }, {
   timestamps: true,
 });
 
-// Create index for year
-FixedExpenseSchema.index({ year: 1 });
+// Create index for userId and year
+FixedExpenseSchema.index({ userId: 1, year: 1 });
 
-export const FixedExpense: Model<IFixedExpense> = mongoose.models.FixedExpense || mongoose.model<IFixedExpense>('FixedExpense', FixedExpenseSchema);
+export const FixedExpense: Model<IFixedExpense> = (mongoose.models?.FixedExpense as Model<IFixedExpense>) || mongoose.model<IFixedExpense>('FixedExpense', FixedExpenseSchema);
 

@@ -39,5 +39,5 @@ const FilterPresetSchema = new Schema<IFilterPreset>({
 // Create indexes for better performance
 FilterPresetSchema.index({ userId: 1, year: 1 });
 
-export const FilterPreset: Model<IFilterPreset> = mongoose.models.FilterPreset || mongoose.model<IFilterPreset>('FilterPreset', FilterPresetSchema);
+export const FilterPreset: Model<IFilterPreset> = (mongoose.models?.FilterPreset as Model<IFilterPreset>) || mongoose.model<IFilterPreset>('FilterPreset', FilterPresetSchema);
 
