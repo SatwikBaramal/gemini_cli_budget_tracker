@@ -30,11 +30,12 @@ interface FixedExpense {
 interface DashboardProps {
   monthlyIncome: number;
   expenses: Expense[];
+  selectedYear?: number;
 }
 
 type TimePeriod = 'this-month' | 'last-month' | 'past-3-months' | 'past-6-months' | 'entire-year';
 
-const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
+const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses, selectedYear }) => {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('this-month');
   const [monthlyExpenses, setMonthlyExpenses] = useState<Expense[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
@@ -143,25 +144,25 @@ const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
   ] as const;
 
   return (
-    <div className="p-4">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="p-2 sm:p-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Monthly Income</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               ₹{monthlyIncome.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Expenses</CardTitle>
             <select
               value={timePeriod}
               onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-              className="text-xs px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              className="text-xs px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white w-full sm:w-auto"
             >
               {timePeriodOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -171,7 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
             </select>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {isLoading ? (
                 <span className="text-gray-400">Loading...</span>
               ) : (
@@ -182,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses }) => {
         </Card>
       </div>
       <div className="grid grid-cols-1 gap-4 mt-4">
-        <LineChartComponent />
+        <LineChartComponent selectedYear={selectedYear} />
         <Summary />
       </div>
     </div>

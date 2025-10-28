@@ -37,6 +37,15 @@ A powerful, modern budget tracking application that helps you take control of yo
 - **Progress Tracking**: Daily budget monitoring for current month
 - **Future Projections**: View available budget for upcoming months
 
+### 📥 Data Export & Portability
+- **Excel Export**: Download complete budget data in professionally formatted Excel workbooks
+  - Multi-year selection capability
+  - Separate sheets for monthly expenses, yearly expenses, fixed expenses, income, and goals
+  - Industry-standard formatting with currency symbols, frozen headers, and color coding
+  - Includes all contributions and transaction history
+  - Automatic sheet generation for months with data
+  - Professional summary statistics and calculations
+
 ### 🎨 Modern User Interface
 - **Responsive Design**: Seamless experience across desktop, tablet, and mobile
 - **Interactive Charts**: Visual expense distribution with pie charts

@@ -190,18 +190,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-2 sm:p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-gray-200 rounded-md">
-              <h2 className="text-lg font-medium text-center">Yearly</h2>
-              <div className="flex gap-2 items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-gray-200 rounded-md gap-3">
+              <h2 className="text-lg font-medium">Yearly</h2>
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
                 <YearSelector 
                   selectedYear={selectedYear} 
                   onYearChange={setSelectedYear} 
                 />
-                <Link href="/monthly">
-                  <Button>Track Monthly</Button>
+                <Link href="/monthly" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto">Track Monthly</Button>
                 </Link>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function Home() {
             )}
           </div>
           <div className="space-y-4">
-            <Dashboard monthlyIncome={yearlyIncome / 12} expenses={expenses} />
+            <Dashboard monthlyIncome={yearlyIncome / 12} expenses={expenses} selectedYear={selectedYear} />
           </div>
         </div>
 

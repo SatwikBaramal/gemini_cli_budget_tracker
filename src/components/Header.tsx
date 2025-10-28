@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { ExportDataDialog } from './ExportDataDialog';
 
 const Header: React.FC = () => {
   const { data: session } = useSession();
   const [showMenu, setShowMenu] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/sign-in' });
@@ -23,12 +26,22 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-gray-800 text-white p-4 flex justify-between items-center px-8">
-      <h1 className="font-[var(--font-crimson-text)] text-sm">Made by Satwik Baramal</h1>
-      <p className="text-2xl font-bold">Vivaranam</p>
-      <div className="flex items-center relative">
+    <header className="bg-gray-800 text-white p-3 md:p-4 flex justify-between items-center px-3 md:px-8">
+      <h1 className="font-[var(--font-crimson-text)] text-xs sm:text-sm hidden sm:block">Made by Satwik Baramal</h1>
+      <p className="text-lg sm:text-xl md:text-2xl font-bold">Vivaranam</p>
+      <div className="flex items-center gap-2 md:gap-4 relative">
         {session?.user ? (
           <>
+            <Button
+              onClick={() => setShowExportDialog(true)}
+              variant="outline"
+              size="sm"
+              className="bg-transparent border-white text-white hover:bg-gray-700 hover:text-white px-2 md:px-3"
+            >
+              <Download className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Export Data</span>
+            </Button>
+
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="flex items-center space-x-2 focus:outline-none"
@@ -37,10 +50,10 @@ const Header: React.FC = () => {
                 <img
                   src={session.user.image}
                   alt={session.user.name || 'User'}
-                  className="w-10 h-10 rounded-full"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
                   {getInitials(session.user.name)}
                 </div>
               )}
@@ -52,7 +65,7 @@ const Header: React.FC = () => {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMenu(false)}
                 />
-                <div className="absolute right-0 top-14 w-64 bg-white rounded-lg shadow-xl z-20 py-2 text-gray-800">
+                <div className="absolute right-0 top-12 md:top-14 w-56 sm:w-64 bg-white rounded-lg shadow-xl z-20 py-2 text-gray-800">
                   <div className="px-4 py-3 border-b border-gray-200">
                     <p className="text-sm font-semibold">{session.user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
@@ -66,6 +79,11 @@ const Header: React.FC = () => {
                 </div>
               </>
             )}
+
+            <ExportDataDialog
+              open={showExportDialog}
+              onOpenChange={setShowExportDialog}
+            />
           </>
         ) : (
           <Button onClick={() => window.location.href = '/sign-in'}>

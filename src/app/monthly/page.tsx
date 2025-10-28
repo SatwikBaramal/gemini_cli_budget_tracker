@@ -368,57 +368,59 @@ export default function Monthly() {
   return (
     <main className="min-h-screen bg-gray-100">
       <Header />
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-2 sm:p-4">
         {/* Header Section */}
-        <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-white rounded-lg shadow mb-6 gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Monthly Expense Tracker</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Monthly Expense Tracker</h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Track expenses for each month separately
             </p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
             <YearSelector 
               selectedYear={selectedYear} 
               onYearChange={setSelectedYear} 
             />
-            <Link href="/">
-              <Button>Track Yearly</Button>
+            <Link href="/" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">Track Yearly</Button>
             </Link>
           </div>
         </div>
 
         {/* Income Display */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6 relative">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6 relative">
           {isLoadingIncomeData && (
             <div className="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center z-10">
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg border">
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">Updating income data...</span>
+              <div className="flex items-center gap-2 bg-white px-3 py-2 sm:px-4 rounded-lg shadow-lg border">
+                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-blue-600" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Updating income data...</span>
               </div>
             </div>
           )}
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-gray-700">Base Monthly Income:</span>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <span className="text-base sm:text-lg font-semibold text-gray-700">Base Monthly Income:</span>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-green-600">{formatCurrency(monthlyIncome)}</span>
+                <span className="text-xl sm:text-2xl font-bold text-green-600">{formatCurrency(monthlyIncome)}</span>
                 {isLoadingIncomeData && (
-                  <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-green-600" />
                 )}
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditIncome}
-                    className="gap-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit Base
-                  </Button>
-                </DialogTrigger>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditIncome}
+                      className="gap-2 flex-1 sm:flex-none"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="hidden sm:inline">Edit Base</span>
+                      <span className="sm:hidden">Edit</span>
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Edit Base Monthly Income</DialogTitle>
@@ -446,13 +448,14 @@ export default function Monthly() {
                     <Button onClick={handleSaveIncome}>Save</Button>
                   </DialogFooter>
                 </DialogContent>
-              </Dialog>
-              <MonthlyIncomeOverrideDialog
-                baseMonthlyIncome={monthlyIncome}
-                year={selectedYear}
-                overrides={incomeOverrides}
-                onOverrideChange={handleIncomeOverrideChange}
-              />
+                </Dialog>
+                <MonthlyIncomeOverrideDialog
+                  baseMonthlyIncome={monthlyIncome}
+                  year={selectedYear}
+                  overrides={incomeOverrides}
+                  onOverrideChange={handleIncomeOverrideChange}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -478,21 +481,25 @@ export default function Monthly() {
         {viewMode === 'current' ? (
           <>
             {/* Current Month Expenses - Prominent Display */}
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6 relative">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 relative">
               {isLoadingIncomeData && (
                 <div className="absolute inset-0 bg-white/60 rounded-lg flex items-center justify-center z-10">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-blue-600" />
                 </div>
               )}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                   {getMonthName(selectedMonth)} Expenses
                 </h2>
-                <div className="text-sm text-gray-600">
-                  Spent: <span className="font-semibold text-red-600">{formatCurrency(getTotalSpentForMonth(selectedMonth))}</span>
-                  {' | '}
-                  Remaining: <span className={`font-semibold ${(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth))}
+                <div className="text-xs sm:text-sm text-gray-600 flex flex-wrap gap-x-2">
+                  <span>
+                    Spent: <span className="font-semibold text-red-600">{formatCurrency(getTotalSpentForMonth(selectedMonth))}</span>
+                  </span>
+                  <span className="hidden sm:inline">|</span>
+                  <span>
+                    Remaining: <span className={`font-semibold ${(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(getIncomeForMonth(selectedMonth) - getTotalSpentForMonth(selectedMonth))}
+                    </span>
                   </span>
                 </div>
               </div>

@@ -4,8 +4,11 @@ import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/lib/models/User';
+import { authConfig } from '@/lib/auth.config';
 
-export const authConfig: NextAuthConfig = {
+// Full config with providers (for API routes, not Edge runtime)
+const fullAuthConfig: NextAuthConfig = {
+  ...authConfig,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -49,6 +52,7 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
         await connectToDatabase();
@@ -92,16 +96,7 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
   },
-  pages: {
-    signIn: '/sign-in',
-    signOut: '/sign-in',
-    error: '/sign-in',
-  },
-  session: {
-    strategy: 'jwt',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+export const { handlers, auth, signIn, signOut } = NextAuth(fullAuthConfig);
 

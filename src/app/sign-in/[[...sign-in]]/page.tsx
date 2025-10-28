@@ -28,16 +28,19 @@ export default function SignInPage() {
       const result = await signIn('credentials', {
         email,
         password,
-        callbackUrl: '/',
+        redirect: false,
       });
 
       console.log('Sign in result:', result);
       
-      // If we get here, there was an error (successful sign-ins redirect automatically)
+      // If there was an error
       if (result?.error) {
         console.log('Sign in ERROR:', result.error);
         setError('Invalid email or password');
         setLoading(false);
+      } else if (result?.ok) {
+        // Successful sign in, redirect to home
+        router.push('/');
       }
     } catch (err) {
       console.error('Sign in error:', err);

@@ -41,7 +41,13 @@ interface MonthData {
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const LineChartComponent: React.FC = () => {
+interface LineChartComponentProps {
+  selectedYear?: number;
+}
+
+const LineChartComponent: React.FC<LineChartComponentProps> = ({ 
+  selectedYear = new Date().getFullYear() 
+}) => {
   const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
@@ -51,11 +57,12 @@ const LineChartComponent: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [expensesRes, fixedRes, incomeRes] = await Promise.all([
-          fetch('/api/expenses/monthly'),
-          fetch('/api/fixed-expenses'),
-          fetch('/api/income/monthly')
+          fetch(`/api/expenses/monthly?year=${selectedYear}`),
+          fetch(`/api/fixed-expenses?year=${selectedYear}`),
+          fetch(`/api/income/monthly?year=${selectedYear}`)
         ]);
         
         const expenses = await expensesRes.json();
@@ -73,7 +80,7 @@ const LineChartComponent: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   const processedData = useMemo(() => {
     // Aggregate monthly expenses by month
@@ -205,23 +212,24 @@ const LineChartComponent: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg font-medium mb-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+          <div className="flex-1">
+            <CardTitle className="text-base sm:text-lg font-medium mb-2">
               Monthly {viewMode === 'expenses' ? 'Expenses' : 'Savings'} Trend
             </CardTitle>
             <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-xl sm:text-2xl font-bold ${percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%
               </span>
-              <span className="text-sm text-gray-500">{selectedPeriod} period</span>
+              <span className="text-xs sm:text-sm text-gray-500">{selectedPeriod} period</span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               variant={viewMode === 'expenses' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('expenses')}
+              className="flex-1 sm:flex-none"
             >
               Expenses
             </Button>
@@ -229,6 +237,7 @@ const LineChartComponent: React.FC = () => {
               variant={viewMode === 'savings' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('savings')}
+              className="flex-1 sm:flex-none"
             >
               Savings
             </Button>
@@ -237,15 +246,15 @@ const LineChartComponent: React.FC = () => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={processedData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+          <LineChart data={processedData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis 
               dataKey="month" 
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               stroke="#888"
             />
             <YAxis 
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               stroke="#888"
               tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
             />
@@ -255,21 +264,21 @@ const LineChartComponent: React.FC = () => {
               dataKey="value" 
               stroke="#10b981" 
               strokeWidth={2}
-              dot={{ fill: '#10b981', r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ fill: '#10b981', r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
         
         {/* Time period selector */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
           {(['1M', '3M', '6M', '1Y', 'All'] as TimePeriod[]).map((period) => (
             <Button
               key={period}
               variant={selectedPeriod === period ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedPeriod(period)}
-              className="min-w-[50px]"
+              className="min-w-[45px] sm:min-w-[50px] px-2 sm:px-3"
             >
               {period}
             </Button>

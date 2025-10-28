@@ -10,8 +10,8 @@ interface IncomeInputProps {
 
 const IncomeInput: React.FC<IncomeInputProps> = ({ label, value, onChange }) => {
   return (
-    <div className="p-4 border-b">
-      <Label htmlFor="income-input" className="text-lg font-medium">
+    <div className="p-3 sm:p-4 border-b">
+      <Label htmlFor="income-input" className="text-base sm:text-lg font-medium">
         {label}
       </Label>
       <Input
@@ -20,7 +20,7 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ label, value, onChange }) => 
         placeholder={`Enter your ${label.toLowerCase()}`}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-2"
+        className="mt-2 text-sm sm:text-base"
       />
     </div>
   );

@@ -210,26 +210,26 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Search className="h-5 w-5" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
             Search & Filter
             {hasActiveFilters() && (
-              <span className="text-sm font-normal text-blue-600">(Active)</span>
+              <span className="text-xs sm:text-sm font-normal text-blue-600">(Active)</span>
             )}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {hasActiveFilters() && (
-              <Button variant="outline" size="sm" onClick={clearAllFilters}>
-                <X className="h-4 w-4 mr-1" />
-                Clear All
+              <Button variant="outline" size="sm" onClick={clearAllFilters} className="w-full sm:w-auto">
+                <X className="h-4 w-4 sm:mr-1" />
+                <span className="ml-1">Clear All</span>
               </Button>
             )}
             <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={!hasActiveFilters()}>
-                  <Save className="h-4 w-4 mr-1" />
-                  Save Preset
+                <Button variant="outline" size="sm" disabled={!hasActiveFilters()} className="w-full sm:w-auto">
+                  <Save className="h-4 w-4 sm:mr-1" />
+                  <span className="ml-1">Save Preset</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -344,11 +344,11 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
               {presets.map((preset) => (
                 <div
                   key={preset._id}
-                  className="flex justify-between items-center p-2 border rounded-md bg-gray-50 hover:bg-gray-100"
+                  className="flex justify-between items-center p-2 sm:p-3 border rounded-md bg-gray-50 hover:bg-gray-100"
                 >
                   <button
                     onClick={() => handleLoadPreset(preset)}
-                    className="flex-1 text-left text-sm font-medium"
+                    className="flex-1 text-left text-xs sm:text-sm font-medium"
                   >
                     {preset.name}
                   </button>
@@ -356,9 +356,9 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeletePreset(preset._id)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-500 hover:text-red-700 ml-2"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               ))}

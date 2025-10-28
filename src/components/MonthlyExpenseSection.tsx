@@ -91,9 +91,9 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
   return (
     <CardContent className="space-y-4">
       {/* Input Form */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div>
-          <Label htmlFor={`name-${monthNumber}`}>Expense Name</Label>
+          <Label htmlFor={`name-${monthNumber}`} className="text-xs sm:text-sm">Expense Name</Label>
           <Input
             id={`name-${monthNumber}`}
             type="text"
@@ -101,10 +101,11 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyPress={handleKeyPress}
+            className="text-sm"
           />
         </div>
         <div>
-          <Label htmlFor={`cost-${monthNumber}`}>Cost (₹)</Label>
+          <Label htmlFor={`cost-${monthNumber}`} className="text-xs sm:text-sm">Cost (₹)</Label>
           <Input
             id={`cost-${monthNumber}`}
             type="number"
@@ -112,9 +113,10 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             onKeyPress={handleKeyPress}
+            className="text-sm"
           />
         </div>
-        <div className="flex items-end">
+        <div className="flex items-end sm:col-span-2 lg:col-span-1">
           <Button onClick={handleAddExpense} className="w-full">
             Add Expense
           </Button>
@@ -124,8 +126,8 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
       {/* Expense List */}
       {(expenses.length > 0 || fixedExpenses.length > 0) ? (
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm text-gray-700">Expenses:</h4>
-          <div className="space-y-1.5 max-h-[70vh] overflow-y-auto">
+          <h4 className="font-semibold text-xs sm:text-sm text-gray-700">Expenses:</h4>
+          <div className="space-y-1.5 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
             {/* Fixed Expenses */}
             {fixedExpenses.map((expense) => {
               const override = expense.overrides?.find(o => o.month === monthNumber);
@@ -133,17 +135,17 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
               const isEditing = editingExpenseId === expense.id;
               
               return (
-                <Card key={`fixed-${expense.id}`} className="p-2 bg-blue-50 border-l-4 border-blue-500">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Pin className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-gray-900">{expense.name}</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                <Card key={`fixed-${expense.id}`} className="p-2 sm:p-3 bg-blue-50 border-l-4 border-blue-500">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
+                        <Pin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base text-gray-900 truncate">{expense.name}</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                           Fixed
                         </span>
                         {override && (
-                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
+                          <span className="text-xs bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                             Modified
                           </span>
                         )}
@@ -208,38 +210,38 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                     </div>
                     
                     {!isEditing && (
-                      <div className="flex gap-1 ml-2">
+                      <div className="flex gap-1 flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
                           onClick={() => {
                             setEditingExpenseId(expense.id);
                             setEditAmount(displayAmount.toString());
                           }}
                           title={override ? "Edit override amount" : "Override for this month"}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                         {override ? (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                             onClick={() => onRevertOverride(override.id)}
                             title="Revert to original amount"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         ) : (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
                             onClick={() => onUnapplyFixedExpense(expense.id, monthNumber)}
                             title="Remove from this month only"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         )}
                       </div>
@@ -251,22 +253,22 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
 
             {/* Regular Expenses */}
             {expenses.map((expense) => (
-              <Card key={expense.id} className="p-2 bg-white border border-gray-200">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-900">{expense.name}</span>
-                      <span className="font-semibold text-gray-900">{formatCurrency(expense.amount)}</span>
+              <Card key={expense.id} className="p-2 sm:p-3 bg-white border border-gray-200">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="font-medium text-sm sm:text-base text-gray-900 truncate">{expense.name}</span>
+                      <span className="font-semibold text-sm sm:text-base text-gray-900 whitespace-nowrap">{formatCurrency(expense.amount)}</span>
                     </div>
                     <span className="text-xs text-gray-500">{formatDateTime(expense.date)}</span>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="ml-2 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                     onClick={() => onDeleteExpense(monthNumber, expense.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </Card>
