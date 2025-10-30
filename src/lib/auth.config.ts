@@ -11,7 +11,9 @@ export const authConfig = {
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  // Trust the host header for deployed environments (Netlify, Vercel, etc)
+  trustHost: true,
   callbacks: {
     authorized({ auth }) {
       return !!auth?.user;

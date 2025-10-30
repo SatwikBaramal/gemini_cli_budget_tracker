@@ -10,6 +10,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint",
+    "generate:secret": "node scripts/generate-auth-secret.js",
+    "re-encrypt": "tsx scripts/re-encrypt-data.ts",
     "migrate": "tsx scripts/migrate-to-mongodb.ts",
     "migrate:year": "tsx scripts/add-year-field-migration.ts",
     "migrate:userid": "tsx scripts/add-userid-to-existing-data.ts",

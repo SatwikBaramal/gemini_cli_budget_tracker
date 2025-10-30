@@ -50,6 +50,12 @@ export function encrypt(text: string): string {
  */
 export function decrypt(encryptedText: string): string {
   try {
+    // If data is not encrypted (doesn't match expected format), return as-is
+    if (!isEncrypted(encryptedText)) {
+      console.warn('Data is not encrypted, returning as plain text:', encryptedText.substring(0, 20) + '...');
+      return encryptedText;
+    }
+
     const key = getEncryptionKey();
     const parts = encryptedText.split(':');
     
@@ -79,9 +85,13 @@ export function decrypt(encryptedText: string): string {
  * Check if a value is encrypted (has the expected format)
  */
 export function isEncrypted(value: string): boolean {
+  if (!value) return false;
   const parts = value.split(':');
   return parts.length === 3 && 
          parts[0].length === IV_LENGTH * 2 && 
-         parts[1].length === AUTH_TAG_LENGTH * 2;
+         parts[1].length === AUTH_TAG_LENGTH * 2 &&
+         /^[0-9a-f]+$/i.test(parts[0]) && 
+         /^[0-9a-f]+$/i.test(parts[1]);
 }
+
 
