@@ -37,8 +37,8 @@ const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
       </div>
       {showLabels && (
         <div className="flex justify-between mt-1 text-xs text-gray-600">
-          <span>{spentPercentage.toFixed(0)}% spent</span>
           <span>{remainingPercentage.toFixed(0)}% left</span>
+          <span>{spentPercentage.toFixed(0)}% spent</span>
         </div>
       )}
     </div>

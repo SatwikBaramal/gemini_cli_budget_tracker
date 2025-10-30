@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Pencil, Pin, X } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
+import { toast } from '@/lib/toast';
 
 interface Expense {
   id: string;
@@ -75,11 +76,42 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
   const remainingBalance = monthlyIncome - totalExpenses;
 
   const handleAddExpense = () => {
-    if (name.trim() && cost && !isNaN(parseFloat(cost))) {
-      onAddExpense(monthNumber, { name: name.trim(), amount: parseFloat(cost) });
-      setName('');
-      setCost('');
+    const trimmedName = name.trim();
+    
+    // Validate expense name
+    if (!trimmedName) {
+      toast.error('Please enter an expense name');
+      return;
     }
+    
+    // Validate cost
+    if (!cost) {
+      toast.error('Please enter an expense cost');
+      return;
+    }
+    
+    const parsedCost = parseFloat(cost);
+    
+    if (isNaN(parsedCost)) {
+      toast.error('Please enter a valid number for cost');
+      return;
+    }
+    
+    if (parsedCost <= 0) {
+      toast.error('Expense cost must be greater than zero');
+      return;
+    }
+    
+    if (parsedCost > 999999999) {
+      toast.error('Expense cost is too large');
+      return;
+    }
+    
+    // All validations passed
+    onAddExpense(monthNumber, { name: trimmedName, amount: parsedCost });
+    setName('');
+    setCost('');
+    toast.success('Expense added successfully');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

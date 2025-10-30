@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Goal } from '@/lib/models/Goal';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 // GET: Fetch all goals for authenticated user
 export async function GET(req: NextRequest) {
@@ -22,9 +23,20 @@ export async function GET(req: NextRequest) {
       query.status = status;
     }
 
-    const goals = await Goal.find(query).sort({ createdAt: -1 });
+    const goals = await Goal.find(query).sort({ createdAt: -1 }).lean();
     
-    return NextResponse.json(goals);
+    // Decrypt amounts before returning
+    const decryptedGoals = goals.map(goal => ({
+      ...goal,
+      targetAmount: parseFloat(decrypt(goal.targetAmount.toString())),
+      currentAmount: parseFloat(decrypt(goal.currentAmount.toString())),
+      contributions: goal.contributions.map((contrib: any) => ({
+        ...contrib,
+        amount: parseFloat(decrypt(contrib.amount.toString()))
+      }))
+    }));
+    
+    return NextResponse.json(decryptedGoals);
   } catch (error) {
     console.error('Error fetching goals:', error);
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
@@ -74,10 +86,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Encrypt amounts before storing
+    const encryptedTargetAmount = encrypt(targetAmount.toString());
+    const encryptedCurrentAmount = encrypt('0');
+
     const newGoal = await Goal.create({
       name,
-      targetAmount,
-      currentAmount: 0,
+      targetAmount: encryptedTargetAmount,
+      currentAmount: encryptedCurrentAmount,
       deadline,
       monthlySavingsTarget,
       userId,
@@ -85,7 +101,14 @@ export async function POST(req: NextRequest) {
       contributions: [],
     });
 
-    return NextResponse.json(newGoal, { status: 201 });
+    // Decrypt amounts before returning
+    const goalToReturn = {
+      ...newGoal.toObject(),
+      targetAmount,
+      currentAmount: 0,
+    };
+
+    return NextResponse.json(goalToReturn, { status: 201 });
   } catch (error) {
     console.error('Error creating goal:', error);
     return NextResponse.json({ error: 'Failed to create goal' }, { status: 500 });

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { MonthlyIncomeOverride } from '@/lib/models/MonthlyIncomeOverride';
+import { validateMonth, validateAmount, validateYear } from '@/lib/validation';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,12 +19,13 @@ export async function GET(request: NextRequest) {
     
     const overrides = await MonthlyIncomeOverride.find({ userId, year });
     
+    // Decrypt override amounts before returning
     return NextResponse.json(
       overrides.map(override => ({
         id: override._id,
         month: override.month,
         year: override.year,
-        override_amount: override.overrideAmount,
+        override_amount: parseFloat(decrypt(override.overrideAmount.toString())),
         date: override.date,
       })),
       {
@@ -50,6 +53,22 @@ export async function POST(request: NextRequest) {
     const yearToUse = year || new Date().getFullYear();
     const date = new Date().toISOString();
     
+    // Validate inputs
+    const monthValidation = validateMonth(month);
+    if (!monthValidation.valid) {
+      return NextResponse.json({ error: monthValidation.error }, { status: 400 });
+    }
+    
+    const amountValidation = validateAmount(override_amount, 'Override amount');
+    if (!amountValidation.valid) {
+      return NextResponse.json({ error: amountValidation.error }, { status: 400 });
+    }
+    
+    const yearValidation = validateYear(yearToUse);
+    if (!yearValidation.valid) {
+      return NextResponse.json({ error: yearValidation.error }, { status: 400 });
+    }
+    
     // Check if override already exists for this user, month and year
     const existing = await MonthlyIncomeOverride.findOne({
       userId,
@@ -57,9 +76,12 @@ export async function POST(request: NextRequest) {
       year: yearToUse
     });
     
+    // Encrypt the override amount before storing
+    const encryptedAmount = encrypt(override_amount.toString());
+    
     if (existing) {
       // Update existing override
-      existing.overrideAmount = override_amount;
+      existing.overrideAmount = encryptedAmount;
       existing.date = date;
       await existing.save();
     } else {
@@ -67,7 +89,7 @@ export async function POST(request: NextRequest) {
       await MonthlyIncomeOverride.create({
         userId,
         month,
-        overrideAmount: override_amount,
+        overrideAmount: encryptedAmount,
         date,
         year: yearToUse
       });
@@ -76,13 +98,14 @@ export async function POST(request: NextRequest) {
     // Fetch and return all overrides for the user and year
     const allOverrides = await MonthlyIncomeOverride.find({ userId, year: yearToUse });
     
+    // Decrypt override amounts before returning
     return NextResponse.json({
       success: true,
       data: allOverrides.map(override => ({
         id: override._id,
         month: override.month,
         year: override.year,
-        override_amount: override.overrideAmount,
+        override_amount: parseFloat(decrypt(override.overrideAmount.toString())),
         date: override.date,
       }))
     });

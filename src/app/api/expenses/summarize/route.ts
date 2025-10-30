@@ -6,6 +6,7 @@ import { Expense } from '@/lib/models/Expense';
 import { FixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 import OpenAI from 'openai';
+import { decrypt } from '@/lib/encryption';
 
 const token = process.env.GITHUB_TOKEN;
 const endpoint = "https://models.github.ai/inference";
@@ -37,11 +38,12 @@ export async function POST(req: NextRequest) {
       FixedExpenseOverride.find({ userId }).lean(),
     ]);
 
-    const yearlyIncome = Number(yearlyIncomeRes?.value) || 0;
-    const monthlyIncome = Number(monthlyIncomeRes?.value) || 0;
-    const totalYearlyExpenses = yearlyExpenses.reduce((acc: number, e) => acc + e.amount, 0);
-    const totalMonthlyExpenses = monthlyExpenses.reduce((acc: number, e) => acc + e.amount, 0);
-    const yearlyExpenseDetails = yearlyExpenses.map((e) => `- ${e.name}: ₹${e.amount.toFixed(2)}`).join('\n');
+    // Decrypt income and expense amounts
+    const yearlyIncome = yearlyIncomeRes ? Number(decrypt(yearlyIncomeRes.value)) : 0;
+    const monthlyIncome = monthlyIncomeRes ? Number(decrypt(monthlyIncomeRes.value)) : 0;
+    const totalYearlyExpenses = yearlyExpenses.reduce((acc: number, e) => acc + parseFloat(decrypt(e.amount.toString())), 0);
+    const totalMonthlyExpenses = monthlyExpenses.reduce((acc: number, e) => acc + parseFloat(decrypt(e.amount.toString())), 0);
+    const yearlyExpenseDetails = yearlyExpenses.map((e) => `- ${e.name}: ₹${parseFloat(decrypt(e.amount.toString())).toFixed(2)}`).join('\n');
     
     // Group monthly expenses by month and format them
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
@@ -60,10 +62,10 @@ export async function POST(req: NextRequest) {
     Object.keys(expensesByMonth).sort((a, b) => Number(a) - Number(b)).forEach(monthNum => {
       const month = Number(monthNum);
       const expenses = expensesByMonth[month];
-      const monthTotal = expenses.reduce((acc, e) => acc + e.amount, 0);
+      const monthTotal = expenses.reduce((acc, e) => acc + parseFloat(decrypt(e.amount.toString())), 0);
       monthlyExpenseDetails += `\n${monthNames[month - 1]}:\n`;
       expenses.forEach(e => {
-        monthlyExpenseDetails += `  - ${e.name}: ₹${e.amount.toFixed(2)}\n`;
+        monthlyExpenseDetails += `  - ${e.name}: ₹${parseFloat(decrypt(e.amount.toString())).toFixed(2)}\n`;
       });
       monthlyExpenseDetails += `  Total for ${monthNames[month - 1]}: ₹${monthTotal.toFixed(2)}\n`;
     });
@@ -99,21 +101,22 @@ export async function POST(req: NextRequest) {
           ? 'All months' 
           : applicableMonths.map((m: number) => monthNames[m - 1]).join(', ');
         
-        fixedExpenseDetails += `\n${fe.name}: ₹${fe.amount.toFixed(2)} (Applied to: ${monthsText})\n`;
+        const decryptedFeAmount = parseFloat(decrypt(fe.amount.toString()));
+        fixedExpenseDetails += `\n${fe.name}: ₹${decryptedFeAmount.toFixed(2)} (Applied to: ${monthsText})\n`;
         
         // Check for overrides
         const overridesForExpense = (fixedOverrides as LeanFixedExpenseOverride[])?.filter((o) => o.fixedExpenseId.toString() === fe._id.toString()) || [];
         if (overridesForExpense.length > 0) {
           fixedExpenseDetails += `  Overrides:\n`;
           overridesForExpense.forEach((override) => {
-            fixedExpenseDetails += `    - ${monthNames[override.month - 1]}: ₹${override.overrideAmount.toFixed(2)}\n`;
+            fixedExpenseDetails += `    - ${monthNames[override.month - 1]}: ₹${parseFloat(decrypt(override.overrideAmount.toString())).toFixed(2)}\n`;
           });
         }
         
-        // Calculate total for each month
+        // Calculate total for each month (decrypt amounts)
         applicableMonths.forEach((month: number) => {
           const override = overridesForExpense.find((o) => o.month === month);
-          const amount = override ? override.overrideAmount : fe.amount;
+          const amount = override ? parseFloat(decrypt(override.overrideAmount.toString())) : decryptedFeAmount;
           fixedExpenseTotalByMonth[month] = (fixedExpenseTotalByMonth[month] || 0) + amount;
         });
       });
@@ -138,10 +141,10 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Helper function to calculate total for a month
+    // Helper function to calculate total for a month (decrypt amounts)
     const getTotalForMonth = (month: number) => {
       const regularExpenses = expensesByMonth[month] || [];
-      const regularTotal = regularExpenses.reduce((acc, e) => acc + e.amount, 0);
+      const regularTotal = regularExpenses.reduce((acc, e) => acc + parseFloat(decrypt(e.amount.toString())), 0);
       const fixedTotal = fixedExpenseTotalByMonth[month] || 0;
       return regularTotal + fixedTotal;
     };
@@ -153,7 +156,7 @@ export async function POST(req: NextRequest) {
     let budgetHealthDetails = '\n--- Monthly Budget Health Analysis ---\n';
     for (let month = 1; month <= 12; month++) {
       const regularExpenses = expensesByMonth[month] || [];
-      const regularTotal = regularExpenses.reduce((acc, e) => acc + e.amount, 0);
+      const regularTotal = regularExpenses.reduce((acc, e) => acc + parseFloat(decrypt(e.amount.toString())), 0);
       const fixedTotal = fixedExpenseTotalByMonth[month] || 0;
       const totalSpent = regularTotal + fixedTotal;
       const remaining = monthlyIncome - totalSpent;

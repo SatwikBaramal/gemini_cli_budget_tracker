@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
+import { validateExpenseName, validateAmount, validateMonthArray, validateYear } from '@/lib/validation';
 
 export async function PUT(
   request: NextRequest,
@@ -19,6 +20,27 @@ export async function PUT(
     const { id } = await params;
     const { name, amount, applicable_months, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
+    
+    // Validate inputs
+    const nameValidation = validateExpenseName(name);
+    if (!nameValidation.valid) {
+      return NextResponse.json({ error: nameValidation.error }, { status: 400 });
+    }
+    
+    const amountValidation = validateAmount(amount, 'Fixed expense amount');
+    if (!amountValidation.valid) {
+      return NextResponse.json({ error: amountValidation.error }, { status: 400 });
+    }
+    
+    const monthsValidation = validateMonthArray(applicable_months);
+    if (!monthsValidation.valid) {
+      return NextResponse.json({ error: monthsValidation.error }, { status: 400 });
+    }
+    
+    const yearValidation = validateYear(yearToUse);
+    if (!yearValidation.valid) {
+      return NextResponse.json({ error: yearValidation.error }, { status: 400 });
+    }
     
     // Verify ownership before update
     const fixedExpense = await FixedExpense.findOne({ _id: id, userId });

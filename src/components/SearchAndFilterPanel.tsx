@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Search, X, Save, Trash2 } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 export interface FilterState {
   searchQuery: string;
@@ -66,7 +67,7 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
   const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [presetName, setPresetName] = useState('');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch presets
   useEffect(() => {
@@ -87,24 +88,24 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
   // Debounced filter change
   const debouncedFilterChange = useCallback(
     (newFilters: FilterState) => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
-      const timer = setTimeout(() => {
+      debounceTimerRef.current = setTimeout(() => {
         onFilterChange(newFilters);
       }, 300);
-      setDebounceTimer(timer);
     },
-    [debounceTimer, onFilterChange]
+    [onFilterChange]
   );
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [debounceTimer]);
+  }, []);
 
   const handleSearchChange = (value: string) => {
     const newFilters = { ...filters, searchQuery: value };
@@ -113,18 +114,39 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
   };
 
   const handleDateChange = (field: 'start' | 'end', value: string) => {
+    const newDateRange = { ...filters.dateRange, [field]: value };
+    
+    // Validate date range if both dates are provided
+    if (newDateRange.start && newDateRange.end) {
+      const startDate = new Date(newDateRange.start);
+      const endDate = new Date(newDateRange.end);
+      
+      if (startDate > endDate) {
+        toast.error('Start date must be before or equal to end date');
+        return;
+      }
+    }
+    
     const newFilters = {
       ...filters,
-      dateRange: { ...filters.dateRange, [field]: value },
+      dateRange: newDateRange,
     };
     setFilters(newFilters);
     debouncedFilterChange(newFilters);
   };
 
   const handleAmountChange = (field: 'min' | 'max', value: number) => {
+    const newAmountRange = { ...filters.amountRange, [field]: value };
+    
+    // Validate amount range
+    if (newAmountRange.min > newAmountRange.max) {
+      toast.error('Minimum amount must be less than or equal to maximum amount');
+      return;
+    }
+    
     const newFilters = {
       ...filters,
-      amountRange: { ...filters.amountRange, [field]: value },
+      amountRange: newAmountRange,
     };
     setFilters(newFilters);
     debouncedFilterChange(newFilters);

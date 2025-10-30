@@ -45,7 +45,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortCo
     if (selectedMonth === 'all') {
       return expenses;
     } else if (selectedMonth === 'yearly') {
-      return expenses.filter(exp => !exp.month || exp.type === 'yearly');
+      // Only show expenses explicitly marked as yearly
+      return expenses.filter(exp => exp.type === 'yearly' || (!exp.month && !exp.type));
     } else {
       const monthNum = parseInt(selectedMonth);
       return expenses.filter(exp => exp.month === monthNum);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/lib/models/Expense';
+import { decrypt } from '@/lib/encryption';
 
 export async function GET(
   request: NextRequest,
@@ -25,10 +26,11 @@ export async function GET(
       return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
     }
     
+    // Decrypt the amount before returning
     return NextResponse.json({
       id: expense._id,
       name: expense.name,
-      amount: expense.amount,
+      amount: parseFloat(decrypt(expense.amount.toString())),
       type: expense.type,
       month: expense.month,
       date: expense.date,

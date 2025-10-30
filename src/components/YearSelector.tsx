@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,9 +19,15 @@ interface YearSelectorProps {
 const YearSelector: React.FC<YearSelectorProps> = ({ selectedYear, onYearChange }) => {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2020 + 3 }, (_, i) => 2020 + i);
+  const [open, setOpen] = useState(false);
+
+  const handleYearSelect = (year: number) => {
+    onYearChange(year);
+    setOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Calendar className="h-4 w-4" />
@@ -37,11 +43,7 @@ const YearSelector: React.FC<YearSelectorProps> = ({ selectedYear, onYearChange 
             <Button
               key={year}
               variant={year === selectedYear ? 'default' : 'outline'}
-              onClick={() => {
-                onYearChange(year);
-                // Close dialog by triggering ESC key
-                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-              }}
+              onClick={() => handleYearSelect(year)}
               className="w-full"
             >
               {year}

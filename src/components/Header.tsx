@@ -27,9 +27,8 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-gray-800 text-white p-3 md:p-4 flex justify-between items-center px-3 md:px-8">
-      <h1 className="font-[var(--font-crimson-text)] text-xs sm:text-sm hidden sm:block">Made by Satwik Baramal</h1>
-      <p className="text-lg sm:text-xl md:text-2xl font-bold">Vivaranam</p>
-      <div className="flex items-center gap-2 md:gap-4 relative">
+      <p className="text-xl sm:text-2xl md:text-3xl font-bold">Vivaranam</p>
+      <div className="flex items-center gap-4 md:gap-6 relative">
         {session?.user ? (
           <>
             <Button
@@ -46,17 +45,9 @@ const Header: React.FC = () => {
               onClick={() => setShowMenu(!showMenu)}
               className="flex items-center space-x-2 focus:outline-none"
             >
-              {session.user.image ? (
-                <img
-                  src={session.user.image}
-                  alt={session.user.name || 'User'}
-                  className="w-8 h-8 md:w-10 md:h-10 rounded-full"
-                />
-              ) : (
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
-                  {getInitials(session.user.name)}
-                </div>
-              )}
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
+                {getInitials(session.user.name)}
+              </div>
             </button>
 
             {showMenu && (

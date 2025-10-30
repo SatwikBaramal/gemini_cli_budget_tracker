@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Setting } from '@/lib/models/Setting';
+import { validateIncome, validateYear } from '@/lib/validation';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +19,10 @@ export async function GET(request: NextRequest) {
     
     const result = await Setting.findOne({ userId, key: 'monthlyIncome', year });
     
-    return NextResponse.json(result ? { value: result.value } : { value: '0' }, {
+    // Decrypt the value before returning
+    const decryptedValue = result ? decrypt(result.value) : '0';
+    
+    return NextResponse.json({ value: decryptedValue }, {
       headers: {
         'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
       }
@@ -40,9 +45,24 @@ export async function POST(request: NextRequest) {
     const { income, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
     
+    // Validate income
+    const incomeValidation = validateIncome(income);
+    if (!incomeValidation.valid) {
+      return NextResponse.json({ error: incomeValidation.error }, { status: 400 });
+    }
+    
+    // Validate year
+    const yearValidation = validateYear(yearToUse);
+    if (!yearValidation.valid) {
+      return NextResponse.json({ error: yearValidation.error }, { status: 400 });
+    }
+    
+    // Encrypt the income value before storing
+    const encryptedIncome = encrypt(income.toString());
+    
     await Setting.findOneAndUpdate(
       { userId, key: 'monthlyIncome', year: yearToUse },
-      { $set: { value: income.toString(), userId, key: 'monthlyIncome', year: yearToUse } },
+      { $set: { value: encryptedIncome, userId, key: 'monthlyIncome', year: yearToUse } },
       { upsert: true, new: true }
     );
     return NextResponse.json({ income });

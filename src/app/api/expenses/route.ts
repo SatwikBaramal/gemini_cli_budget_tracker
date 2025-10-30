@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/lib/models/Expense';
+import { validateExpenseName, validateAmount, validateYear } from '@/lib/validation';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +19,11 @@ export async function GET(request: NextRequest) {
     
     const expenses = await Expense.find({ userId, type: 'yearly', year }).lean();
     
-    // Map _id to id for frontend compatibility
+    // Map _id to id for frontend compatibility and decrypt amounts
     const mappedExpenses = expenses.map((expense) => ({
       id: expense._id.toString(),
       name: expense.name,
-      amount: expense.amount,
+      amount: parseFloat(decrypt(expense.amount.toString())),
       type: expense.type,
       year: expense.year
     }));
@@ -49,9 +51,28 @@ export async function POST(request: NextRequest) {
     const { name, amount, year } = await request.json();
     const yearToUse = year || new Date().getFullYear();
     
+    // Validate inputs
+    const nameValidation = validateExpenseName(name);
+    if (!nameValidation.valid) {
+      return NextResponse.json({ error: nameValidation.error }, { status: 400 });
+    }
+    
+    const amountValidation = validateAmount(amount, 'Expense amount');
+    if (!amountValidation.valid) {
+      return NextResponse.json({ error: amountValidation.error }, { status: 400 });
+    }
+    
+    const yearValidation = validateYear(yearToUse);
+    if (!yearValidation.valid) {
+      return NextResponse.json({ error: yearValidation.error }, { status: 400 });
+    }
+    
+    // Encrypt the amount before storing
+    const encryptedAmount = encrypt(amount.toString());
+    
     const expense = await Expense.create({
       name,
-      amount,
+      amount: encryptedAmount,
       type: 'yearly',
       year: yearToUse,
       userId

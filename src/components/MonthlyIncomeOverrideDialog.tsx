@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Pencil, X, DollarSign, Loader2 } from 'lucide-react';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
+import { toast } from '@/lib/toast';
 
 interface MonthlyIncomeOverride {
   id: string;
@@ -66,7 +67,7 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
   const handleSaveOverride = async (month: number) => {
     const amount = parseFloat(editAmount);
     if (isNaN(amount) || amount < 0) {
-      alert('Please enter a valid positive amount');
+      toast.error('Please enter a valid positive amount');
       return;
     }
 
@@ -120,7 +121,7 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
       }
     } catch (error) {
       console.error('Error saving override:', error);
-      alert('Failed to save income override');
+      toast.error('Failed to save income override');
       // Revert optimistic update on error
       setLocalOverrides(overrides);
     } finally {
@@ -154,7 +155,7 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
       }
     } catch (error) {
       console.error('Error deleting override:', error);
-      alert('Failed to delete income override');
+      toast.error('Failed to delete income override');
       // Revert optimistic update on error
       setLocalOverrides(previousOverrides);
     } finally {

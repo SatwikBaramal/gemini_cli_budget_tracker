@@ -25,7 +25,8 @@ import SearchAndFilterPanel, { FilterState } from '@/components/SearchAndFilterP
 import SearchResultsDisplay from '@/components/SearchResultsDisplay';
 import MonthlyIncomeOverrideDialog from '@/components/MonthlyIncomeOverrideDialog';
 import { getMonthName, formatCurrency } from '@/lib/formatters';
-import { Pencil, DollarSign, Loader2 } from 'lucide-react';
+import { Loader2, Pencil } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 interface Expense {
   id: string;
@@ -79,35 +80,84 @@ export default function Monthly() {
     dateRange: { start: '', end: '' },
     amountRange: { min: 0, max: 100000 },
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const fetchData = async () => {
-      // Fetch monthly income for the selected year
-      const incomeRes = await fetch(`/api/income/monthly?year=${selectedYear}`);
-      const incomeData = await incomeRes.json();
-      setMonthlyIncome(Number(incomeData.value));
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch monthly income for the selected year
+        const incomeRes = await fetch(`/api/income/monthly?year=${selectedYear}`, {
+          signal: abortController.signal,
+        });
+        
+        if (!incomeRes.ok) {
+          throw new Error('Failed to fetch monthly income');
+        }
+        
+        const incomeData = await incomeRes.json();
+        setMonthlyIncome(Number(incomeData.value));
 
-      // Fetch income overrides for the selected year
-      const overridesRes = await fetch(`/api/income/monthly/overrides?year=${selectedYear}`);
-      const overridesData: MonthlyIncomeOverride[] = await overridesRes.json();
-      setIncomeOverrides(overridesData);
+        // Fetch income overrides for the selected year
+        const overridesRes = await fetch(`/api/income/monthly/overrides?year=${selectedYear}`, {
+          signal: abortController.signal,
+        });
+        
+        if (!overridesRes.ok) {
+          throw new Error('Failed to fetch income overrides');
+        }
+        
+        const overridesData: MonthlyIncomeOverride[] = await overridesRes.json();
+        setIncomeOverrides(overridesData);
 
-      // Fetch all monthly expenses for the selected year
-      const expensesRes = await fetch(`/api/expenses/monthly?year=${selectedYear}`);
-      const allExpenses: Expense[] = await expensesRes.json();
+        // Fetch all monthly expenses for the selected year
+        const expensesRes = await fetch(`/api/expenses/monthly?year=${selectedYear}`, {
+          signal: abortController.signal,
+        });
+        
+        if (!expensesRes.ok) {
+          throw new Error('Failed to fetch expenses');
+        }
+        
+        const allExpenses: Expense[] = await expensesRes.json();
 
-      // Group expenses by month
-      const grouped: { [key: number]: Expense[] } = {};
-      MONTHS.forEach(month => {
-        grouped[month] = allExpenses.filter(exp => exp.month === month);
-      });
-      setExpensesByMonth(grouped);
+        // Group expenses by month
+        const grouped: { [key: number]: Expense[] } = {};
+        MONTHS.forEach(month => {
+          grouped[month] = allExpenses.filter(exp => exp.month === month);
+        });
+        setExpensesByMonth(grouped);
 
-      // Fetch fixed expenses for the selected year
-      const fixedRes = await fetch(`/api/fixed-expenses?year=${selectedYear}`);
-      const fixedData: FixedExpense[] = await fixedRes.json();
-      setFixedExpenses(fixedData);
+        // Fetch fixed expenses for the selected year
+        const fixedRes = await fetch(`/api/fixed-expenses?year=${selectedYear}`, {
+          signal: abortController.signal,
+        });
+        
+        if (!fixedRes.ok) {
+          throw new Error('Failed to fetch fixed expenses');
+        }
+        
+        const fixedData: FixedExpense[] = await fixedRes.json();
+        setFixedExpenses(fixedData);
+      } catch (err: unknown) {
+        // Only show error if not aborted
+        if (err instanceof Error && err.name !== 'AbortError') {
+          const errorMessage = err.message || 'Failed to load data';
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
     };
+    
     fetchData();
     
     // Reset filters when year changes
@@ -116,6 +166,11 @@ export default function Monthly() {
       dateRange: { start: '', end: '' },
       amountRange: { min: 0, max: 100000 },
     });
+    
+    // Cleanup: abort fetch on unmount or year change
+    return () => {
+      abortController.abort();
+    };
   }, [selectedYear]);
 
   const addExpense = async (monthNumber: number, expense: { name: string; amount: number }) => {
@@ -369,6 +424,28 @@ export default function Monthly() {
     <main className="min-h-screen bg-gray-100">
       <Header />
       <div className="container mx-auto p-2 sm:p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+              <p className="text-gray-600 font-medium">Loading monthly data for {selectedYear}...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+              <h3 className="text-red-800 font-semibold mb-2">Error Loading Data</h3>
+              <p className="text-red-600 text-sm">{error}</p>
+              <Button 
+                className="mt-4" 
+                onClick={() => window.location.reload()}
+              >
+                Reload Page
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-white rounded-lg shadow mb-6 gap-3">
           <div>
@@ -637,6 +714,8 @@ export default function Monthly() {
                 })}
               </Accordion>
             </div>
+          </>
+        )}
           </>
         )}
       </div>

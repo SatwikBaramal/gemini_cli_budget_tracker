@@ -9,6 +9,7 @@ import { FixedExpense, IFixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride, IFixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 import { MonthlyIncomeOverride, IMonthlyIncomeOverride } from '@/lib/models/MonthlyIncomeOverride';
 import { Types } from 'mongoose';
+import { decrypt } from '@/lib/encryption';
 
 // Force this route to use Node.js runtime (not Edge) to support mongoose and exceljs
 export const runtime = 'nodejs';
@@ -157,33 +158,33 @@ async function addOverviewSheet(workbook: ExcelJS.Workbook, year: number, data: 
 
   worksheet.addRow([]);
 
-  // Calculate totals
+  // Calculate totals (decrypt amounts first)
   const monthlyExpenses = data.expenses.filter((e) => e.type === 'monthly');
   const yearlyExpenses = data.expenses.filter((e) => e.type === 'yearly');
   
-  const totalMonthlyExpenses = monthlyExpenses.reduce((sum: number, e) => sum + e.amount, 0);
-  const totalYearlyExpenses = yearlyExpenses.reduce((sum: number, e) => sum + e.amount, 0);
+  const totalMonthlyExpenses = monthlyExpenses.reduce((sum: number, e) => sum + parseFloat(decrypt(e.amount.toString())), 0);
+  const totalYearlyExpenses = yearlyExpenses.reduce((sum: number, e) => sum + parseFloat(decrypt(e.amount.toString())), 0);
   
-  // Calculate fixed expenses total
+  // Calculate fixed expenses total (decrypt amounts first)
   let totalFixedExpenses = 0;
   data.fixedExpenses.forEach((fe) => {
     fe.applicableMonths.forEach((month: number) => {
       const override = data.fixedExpenseOverrides.find(
         (o) => o.fixedExpenseId.toString() === fe._id.toString() && o.month === month
       );
-      totalFixedExpenses += override ? override.overrideAmount : fe.amount;
+      totalFixedExpenses += override ? parseFloat(decrypt(override.overrideAmount.toString())) : parseFloat(decrypt(fe.amount.toString()));
     });
   });
 
-  // Get monthly income
+  // Get monthly income (decrypt first)
   const monthlyIncomeSetting = data.settings.find((s) => s.key === 'monthlyIncome');
-  const monthlyIncome = monthlyIncomeSetting ? parseFloat(monthlyIncomeSetting.value) : 0;
+  const monthlyIncome = monthlyIncomeSetting ? parseFloat(decrypt(monthlyIncomeSetting.value)) : 0;
 
-  // Calculate total income with overrides
+  // Calculate total income with overrides (decrypt amounts first)
   let actualTotalIncome = 0;
   for (let month = 1; month <= 12; month++) {
     const override = data.monthlyIncomeOverrides.find((o) => o.month === month);
-    actualTotalIncome += override ? override.overrideAmount : monthlyIncome;
+    actualTotalIncome += override ? parseFloat(decrypt(override.overrideAmount.toString())) : monthlyIncome;
   }
 
   const totalExpenses = totalMonthlyExpenses + totalYearlyExpenses + totalFixedExpenses;
@@ -299,13 +300,13 @@ async function addMonthlySheets(workbook: ExcelJS.Workbook, year: number, data: 
       };
     });
 
-    // Monthly expenses
+    // Monthly expenses (decrypt amounts)
     const monthlyExpenses = data.expenses.filter((e) => e.type === 'monthly' && e.month === month);
     monthlyExpenses.forEach((expense) => {
       const row = worksheet.addRow([
         expense.date || '',
         expense.name,
-        expense.amount,
+        parseFloat(decrypt(expense.amount.toString())),
         'Variable'
       ]);
       row.getCell(3).numFmt = '₹#,##0.00';
@@ -328,7 +329,7 @@ async function addMonthlySheets(workbook: ExcelJS.Workbook, year: number, data: 
       const override = data.fixedExpenseOverrides.find(
         (o) => o.fixedExpenseId.toString() === fixedExpense._id.toString() && o.month === month
       );
-      const amount = override ? override.overrideAmount : fixedExpense.amount;
+      const amount = override ? parseFloat(decrypt(override.overrideAmount.toString())) : parseFloat(decrypt(fixedExpense.amount.toString()));
       const date = override ? override.date : '';
 
       const row = worksheet.addRow([
@@ -348,13 +349,13 @@ async function addMonthlySheets(workbook: ExcelJS.Workbook, year: number, data: 
       });
     });
 
-    // Subtotal
-    const totalMonthlyExpenses = monthlyExpenses.reduce((sum: number, e) => sum + e.amount, 0);
+    // Subtotal (decrypt amounts)
+    const totalMonthlyExpenses = monthlyExpenses.reduce((sum: number, e) => sum + parseFloat(decrypt(e.amount.toString())), 0);
     const totalFixedExpenses = applicableFixedExpenses.reduce((sum: number, fe) => {
       const override = data.fixedExpenseOverrides.find(
         (o) => o.fixedExpenseId.toString() === fe._id.toString() && o.month === month
       );
-      return sum + (override ? override.overrideAmount : fe.amount);
+      return sum + (override ? parseFloat(decrypt(override.overrideAmount.toString())) : parseFloat(decrypt(fe.amount.toString())));
     }, 0);
     const total = totalMonthlyExpenses + totalFixedExpenses;
 
@@ -425,12 +426,13 @@ async function addYearlyExpensesSheet(workbook: ExcelJS.Workbook, year: number, 
     };
   });
 
-  // Data rows
+  // Data rows (decrypt amounts)
   let total = 0;
   yearlyExpenses.forEach((expense) => {
+    const decryptedAmount = parseFloat(decrypt(expense.amount.toString()));
     const row = worksheet.addRow([
       expense.name,
-      expense.amount,
+      decryptedAmount,
       expense.date || ''
     ]);
     row.getCell(2).numFmt = '₹#,##0.00';
@@ -442,7 +444,7 @@ async function addYearlyExpensesSheet(workbook: ExcelJS.Workbook, year: number, 
         right: { style: 'thin' }
       };
     });
-    total += expense.amount;
+    total += decryptedAmount;
   });
 
   // Total
@@ -513,7 +515,7 @@ async function addFixedExpensesSheet(workbook: ExcelJS.Workbook, year: number, d
     };
   });
 
-  // Data rows
+  // Data rows (decrypt amounts)
   data.fixedExpenses.forEach((fixedExpense) => {
     const monthNames = fixedExpense.applicableMonths.map((m: number) => MONTH_NAMES[m - 1]).join(', ');
     const hasOverrides = data.fixedExpenseOverrides.some(
@@ -522,7 +524,7 @@ async function addFixedExpensesSheet(workbook: ExcelJS.Workbook, year: number, d
 
     const row = worksheet.addRow([
       fixedExpense.name,
-      fixedExpense.amount,
+      parseFloat(decrypt(fixedExpense.amount.toString())),
       monthNames,
       hasOverrides ? 'Yes' : 'No'
     ]);
@@ -585,21 +587,21 @@ async function addIncomeSheet(workbook: ExcelJS.Workbook, year: number, data: In
     };
   });
 
-  // Get base monthly income
+  // Get base monthly income (decrypt first)
   const monthlyIncomeSetting = data.settings.find((s) => s.key === 'monthlyIncome');
-  const baseIncome = monthlyIncomeSetting ? parseFloat(monthlyIncomeSetting.value) : 0;
+  const baseIncome = monthlyIncomeSetting ? parseFloat(decrypt(monthlyIncomeSetting.value)) : 0;
 
-  // Data rows for each month
+  // Data rows for each month (decrypt amounts)
   let totalIncome = 0;
   for (let month = 1; month <= 12; month++) {
     const override = data.monthlyIncomeOverrides.find((o) => o.month === month);
-    const actualIncome = override ? override.overrideAmount : baseIncome;
+    const actualIncome = override ? parseFloat(decrypt(override.overrideAmount.toString())) : baseIncome;
     totalIncome += actualIncome;
 
     const row = worksheet.addRow([
       MONTH_NAMES[month - 1],
       baseIncome,
-      override ? override.overrideAmount : '',
+      override ? parseFloat(decrypt(override.overrideAmount.toString())) : '',
       actualIncome
     ]);
 
@@ -687,14 +689,16 @@ async function addGoalsSheet(workbook: ExcelJS.Workbook, goals: (IGoal & { _id: 
     };
   });
 
-  // Data rows
+  // Data rows (decrypt amounts)
   goals.forEach((goal) => {
-    const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount * 100).toFixed(2) : '0.00';
+    const decryptedTargetAmount = parseFloat(decrypt(goal.targetAmount.toString()));
+    const decryptedCurrentAmount = parseFloat(decrypt(goal.currentAmount.toString()));
+    const progress = decryptedTargetAmount > 0 ? (decryptedCurrentAmount / decryptedTargetAmount * 100).toFixed(2) : '0.00';
     
     const row = worksheet.addRow([
       goal.name,
-      goal.targetAmount,
-      goal.currentAmount,
+      decryptedTargetAmount,
+      decryptedCurrentAmount,
       parseFloat(progress),
       goal.status,
       goal.deadline
@@ -761,14 +765,14 @@ async function addGoalsSheet(workbook: ExcelJS.Workbook, goals: (IGoal & { _id: 
     };
   });
 
-  // Add contributions for each goal
+  // Add contributions for each goal (decrypt amounts)
   goals.forEach((goal) => {
     if (goal.contributions && goal.contributions.length > 0) {
       goal.contributions.forEach((contrib) => {
         const row = worksheet.addRow([
           goal.name,
           contrib.date,
-          contrib.amount,
+          parseFloat(decrypt(contrib.amount.toString())),
           contrib.type,
           contrib.note || ''
         ]);

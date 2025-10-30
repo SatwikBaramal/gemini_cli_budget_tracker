@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Expense } from '@/lib/models/Expense';
+import { decrypt } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,11 +21,11 @@ export async function GET(request: NextRequest) {
       .sort({ month: 1, date: -1 })
       .lean();
     
-    // Map _id to id for frontend compatibility
+    // Map _id to id for frontend compatibility and decrypt amounts
     const mappedExpenses = expenses.map((expense) => ({
       id: expense._id.toString(),
       name: expense.name,
-      amount: expense.amount,
+      amount: parseFloat(decrypt(expense.amount.toString())),
       type: expense.type,
       month: expense.month,
       date: expense.date,

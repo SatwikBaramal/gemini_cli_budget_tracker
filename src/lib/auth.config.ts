@@ -20,3 +20,5 @@ export const authConfig = {
   providers: [], // Providers will be added in the full auth config
 } satisfies NextAuthConfig;
 
+
+

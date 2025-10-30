@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
+import { encrypt } from '@/lib/encryption';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,9 @@ export async function POST(request: NextRequest) {
     const yearToUse = year || new Date().getFullYear();
     const date = new Date().toISOString();
     
+    // Encrypt the override amount before storing
+    const encryptedAmount = encrypt(override_amount.toString());
+    
     // Check if override already exists for this fixed expense, month, and year for this user
     const existing = await FixedExpenseOverride.findOne({
       userId,
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
     
     if (existing) {
       // Update existing override
-      existing.overrideAmount = override_amount;
+      existing.overrideAmount = encryptedAmount;
       existing.date = date;
       await existing.save();
       
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
         userId,
         fixedExpenseId: fixed_expense_id,
         month,
-        overrideAmount: override_amount,
+        overrideAmount: encryptedAmount,
         date,
         year: yearToUse
       });

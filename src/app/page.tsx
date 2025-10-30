@@ -11,6 +11,8 @@ import SearchResultsDisplay from '@/components/SearchResultsDisplay';
 import { GoalsSection } from '@/components/GoalsSection';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { toast } from '@/lib/toast';
+import { Loader2 } from 'lucide-react';
 
 interface Expense {
   id: string;
@@ -49,45 +51,77 @@ export default function Home() {
     dateRange: { start: '', end: '' },
     amountRange: { min: 0, max: 100000 },
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const fetchData = async () => {
-      const incomeRes = await fetch(`/api/income?year=${selectedYear}`);
-      const incomeData = await incomeRes.json();
-      setYearlyIncome(Number(incomeData.value));
-
-      // Fetch yearly, monthly, and fixed expenses for the selected year
-      const [yearlyRes, monthlyRes, fixedRes] = await Promise.all([
-        fetch(`/api/expenses?year=${selectedYear}`),
-        fetch(`/api/expenses/monthly?year=${selectedYear}`),
-        fetch(`/api/fixed-expenses?year=${selectedYear}`)
-      ]);
+      setIsLoading(true);
+      setError(null);
       
-      const yearlyExpenses = await yearlyRes.json();
-      const monthlyExpenses = await monthlyRes.json();
-      const fixedExpenses = await fixedRes.json();
-
-      // Transform fixed expenses into individual expense entries for each applicable month
-      const expandedFixedExpenses: Expense[] = fixedExpenses.flatMap((fixed: FixedExpenseAPI) => {
-        return fixed.applicable_months.map((month: number) => {
-          // Check if there's an override for this month
-          const override = fixed.overrides?.find((o) => o.month === month);
-          const amount = override ? override.override_amount : fixed.amount;
-          
-          return {
-            id: `fixed-${fixed.id}-${month}`,
-            name: fixed.name,
-            amount: amount,
-            month: month,
-            type: 'fixed',
-            date: override?.date || `${selectedYear}-${String(month).padStart(2, '0')}-01`,
-          };
+      try {
+        const incomeRes = await fetch(`/api/income?year=${selectedYear}`, {
+          signal: abortController.signal,
         });
-      });
-      
-      // Combine all expenses for display
-      setExpenses([...yearlyExpenses, ...monthlyExpenses, ...expandedFixedExpenses]);
+        
+        if (!incomeRes.ok) {
+          throw new Error('Failed to fetch income data');
+        }
+        
+        const incomeData = await incomeRes.json();
+        setYearlyIncome(Number(incomeData.value));
+
+        // Fetch yearly, monthly, and fixed expenses for the selected year
+        const [yearlyRes, monthlyRes, fixedRes] = await Promise.all([
+          fetch(`/api/expenses?year=${selectedYear}`, { signal: abortController.signal }),
+          fetch(`/api/expenses/monthly?year=${selectedYear}`, { signal: abortController.signal }),
+          fetch(`/api/fixed-expenses?year=${selectedYear}`, { signal: abortController.signal })
+        ]);
+        
+        if (!yearlyRes.ok || !monthlyRes.ok || !fixedRes.ok) {
+          throw new Error('Failed to fetch expenses data');
+        }
+        
+        const yearlyExpenses = await yearlyRes.json();
+        const monthlyExpenses = await monthlyRes.json();
+        const fixedExpenses = await fixedRes.json();
+
+        // Transform fixed expenses into individual expense entries for each applicable month
+        const expandedFixedExpenses: Expense[] = fixedExpenses.flatMap((fixed: FixedExpenseAPI) => {
+          return fixed.applicable_months.map((month: number) => {
+            // Check if there's an override for this month
+            const override = fixed.overrides?.find((o) => o.month === month);
+            const amount = override ? override.override_amount : fixed.amount;
+            
+            return {
+              id: `fixed-${fixed.id}-${month}`,
+              name: fixed.name,
+              amount: amount,
+              month: month,
+              type: 'fixed',
+              date: override?.date || `${selectedYear}-${String(month).padStart(2, '0')}-01`,
+            };
+          });
+        });
+        
+        // Combine all expenses for display
+        setExpenses([...yearlyExpenses, ...monthlyExpenses, ...expandedFixedExpenses]);
+      } catch (err: unknown) {
+        // Only show error if not aborted
+        if (err instanceof Error && err.name !== 'AbortError') {
+          const errorMessage = err.message || 'Failed to load data';
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
     };
+    
     fetchData();
     
     // Reset filters when year changes
@@ -96,6 +130,11 @@ export default function Home() {
       dateRange: { start: '', end: '' },
       amountRange: { min: 0, max: 100000 },
     });
+    
+    // Cleanup: abort fetch on unmount or year change
+    return () => {
+      abortController.abort();
+    };
   }, [selectedYear]);
 
   // Filter expenses based on search and filter criteria
@@ -191,7 +230,29 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100">
       <Header />
       <div className="container mx-auto p-2 sm:p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+              <p className="text-gray-600 font-medium">Loading data for {selectedYear}...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+              <h3 className="text-red-800 font-semibold mb-2">Error Loading Data</h3>
+              <p className="text-red-600 text-sm">{error}</p>
+              <Button 
+                className="mt-4" 
+                onClick={() => window.location.reload()}
+              >
+                Reload Page
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-gray-200 rounded-md gap-3">
               <h2 className="text-lg font-medium">Yearly</h2>
@@ -238,6 +299,8 @@ export default function Home() {
         <div className="mt-6">
           <GoalsSection />
         </div>
+        </>
+        )}
       </div>
     </main>
   );
