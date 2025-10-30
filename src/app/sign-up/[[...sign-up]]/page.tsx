@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,9 +63,6 @@ export default function SignUpPage() {
     setLoading(true);
     await signIn('google', { callbackUrl: '/' });
   };
-
-  // Check if Google OAuth is configured
-  const isGoogleEnabled = process.env.NEXT_PUBLIC_GOOGLE_ENABLED === 'true';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12">

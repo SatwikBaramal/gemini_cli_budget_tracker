@@ -26,7 +26,6 @@ export function Summary() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [bufferedContent, setBufferedContent] = useState('');
   const [displayedContent, setDisplayedContent] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [messageCount, setMessageCount] = useState(0);
@@ -43,8 +42,6 @@ export function Summary() {
   // Typewriter effect: display buffered content character by character
   useEffect(() => {
     if (bufferedContent.length > displayedContent.length) {
-      setIsTyping(true);
-      
       if (typingIntervalRef.current) {
         clearInterval(typingIntervalRef.current);
       }
@@ -60,7 +57,6 @@ export function Summary() {
               clearInterval(typingIntervalRef.current);
               typingIntervalRef.current = null;
             }
-            setIsTyping(false);
             return prev;
           }
         });
@@ -188,7 +184,6 @@ export function Summary() {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    setIsTyping(false);
 
     // If there's buffered content that hasn't finished displaying,
     // finalize it in the previous message before starting new one

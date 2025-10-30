@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IContribution {
-  amount: number;
+  amount: string; // Encrypted value stored as string
   date: string;
   note?: string;
   type: 'addition' | 'withdrawal';
@@ -9,8 +9,8 @@ export interface IContribution {
 
 export interface IGoal {
   name: string;
-  targetAmount: number;
-  currentAmount: number;
+  targetAmount: string; // Encrypted value stored as string
+  currentAmount: string; // Encrypted value stored as string
   deadline: string;
   monthlySavingsTarget?: number;
   userId: string;
@@ -19,7 +19,7 @@ export interface IGoal {
 }
 
 const ContributionSchema = new Schema<IContribution>({
-  amount: { type: Number, required: true },
+  amount: { type: String, required: true }, // Store encrypted string
   date: { type: String, required: true },
   note: { type: String },
   type: { type: String, required: true, enum: ['addition', 'withdrawal'], default: 'addition' },
@@ -27,8 +27,8 @@ const ContributionSchema = new Schema<IContribution>({
 
 const GoalSchema = new Schema<IGoal>({
   name: { type: String, required: true },
-  targetAmount: { type: Number, required: true, min: 0 },
-  currentAmount: { type: Number, required: true, default: 0, min: 0 },
+  targetAmount: { type: String, required: true }, // Store encrypted string
+  currentAmount: { type: String, required: true, default: '0' }, // Store encrypted string
   deadline: { type: String, required: true },
   monthlySavingsTarget: { type: Number, min: 0 },
   userId: { type: String, required: true, index: true },

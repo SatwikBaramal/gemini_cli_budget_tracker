@@ -29,13 +29,12 @@ interface FixedExpense {
 
 interface DashboardProps {
   monthlyIncome: number;
-  expenses: Expense[];
   selectedYear?: number;
 }
 
 type TimePeriod = 'this-month' | 'last-month' | 'past-3-months' | 'past-6-months' | 'entire-year';
 
-const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, expenses, selectedYear }) => {
+const Dashboard: React.FC<DashboardProps> = ({ monthlyIncome, selectedYear }) => {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('this-month');
   const [monthlyExpenses, setMonthlyExpenses] = useState<Expense[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);

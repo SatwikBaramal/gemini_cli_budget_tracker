@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
-import { Goal } from '@/lib/models/Goal';
+import { Goal, IContribution } from '@/lib/models/Goal';
 import { encrypt, decrypt } from '@/lib/encryption';
 
 // GET: Fetch all goals for authenticated user
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       ...goal,
       targetAmount: parseFloat(decrypt(goal.targetAmount.toString())),
       currentAmount: parseFloat(decrypt(goal.currentAmount.toString())),
-      contributions: goal.contributions.map((contrib: any) => ({
+      contributions: goal.contributions.map((contrib: IContribution) => ({
         ...contrib,
         amount: parseFloat(decrypt(contrib.amount.toString()))
       }))

@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     interface LeanFixedExpense {
       _id: { toString: () => string };
       name: string;
-      amount: number;
+      amount: string; // Encrypted value stored as string
       applicableMonths: number[];
     }
     
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       _id: { toString: () => string };
       fixedExpenseId: { toString: () => string };
       month: number;
-      overrideAmount: number;
+      overrideAmount: string; // Encrypted value stored as string
     }
     
     if (fixedExpenses && fixedExpenses.length > 0) {

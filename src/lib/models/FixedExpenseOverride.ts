@@ -3,7 +3,7 @@ import mongoose, { Schema, Model, Types } from 'mongoose';
 export interface IFixedExpenseOverride {
   fixedExpenseId: Types.ObjectId;
   month: number;
-  overrideAmount: number;
+  overrideAmount: string; // Encrypted value stored as string
   date: string;
   year: number;
   userId: string;
@@ -12,7 +12,7 @@ export interface IFixedExpenseOverride {
 const FixedExpenseOverrideSchema = new Schema<IFixedExpenseOverride>({
   fixedExpenseId: { type: Schema.Types.ObjectId, ref: 'FixedExpense', required: true },
   month: { type: Number, required: true, min: 1, max: 12 },
-  overrideAmount: { type: Number, required: true },
+  overrideAmount: { type: String, required: true }, // Store encrypted string
   date: { type: String, required: true },
   year: { type: Number, required: true },
   userId: { type: String, required: true, index: true },

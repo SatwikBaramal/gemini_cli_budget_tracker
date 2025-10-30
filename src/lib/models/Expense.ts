@@ -2,7 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IExpense {
   name: string;
-  amount: number;
+  amount: string; // Encrypted value stored as string
   type: 'yearly' | 'monthly';
   month?: number;
   date?: string;
@@ -12,7 +12,7 @@ export interface IExpense {
 
 const ExpenseSchema = new Schema<IExpense>({
   name: { type: String, required: true },
-  amount: { type: Number, required: true },
+  amount: { type: String, required: true }, // Store encrypted string
   type: { type: String, required: true, default: 'yearly', enum: ['yearly', 'monthly'] },
   month: { type: Number, min: 1, max: 12 },
   date: { type: String },

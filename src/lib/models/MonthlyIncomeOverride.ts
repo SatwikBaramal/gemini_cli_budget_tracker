@@ -3,7 +3,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 export interface IMonthlyIncomeOverride {
   month: number;
   year: number;
-  overrideAmount: number;
+  overrideAmount: string; // Encrypted value stored as string
   date: string;
   userId: string;
 }
@@ -11,7 +11,7 @@ export interface IMonthlyIncomeOverride {
 const MonthlyIncomeOverrideSchema = new Schema<IMonthlyIncomeOverride>({
   month: { type: Number, required: true, min: 1, max: 12 },
   year: { type: Number, required: true },
-  overrideAmount: { type: Number, required: true },
+  overrideAmount: { type: String, required: true }, // Store encrypted string
   date: { type: String, required: true },
   userId: { type: String, required: true, index: true },
 }, {

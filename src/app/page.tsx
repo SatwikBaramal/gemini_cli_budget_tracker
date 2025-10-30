@@ -291,7 +291,7 @@ export default function Home() {
             )}
           </div>
           <div className="space-y-4">
-            <Dashboard monthlyIncome={yearlyIncome / 12} expenses={expenses} selectedYear={selectedYear} />
+            <Dashboard monthlyIncome={yearlyIncome / 12} selectedYear={selectedYear} />
           </div>
         </div>
 
