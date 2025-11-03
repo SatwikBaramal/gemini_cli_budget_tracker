@@ -187,7 +187,7 @@ export function ExportDataDialog({ open, onOpenChange }: ExportDataDialogProps) 
                 {availableYears.map(year => (
                   <label
                     key={year}
-                    className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-2 p-3 border dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -208,8 +208,8 @@ export function ExportDataDialog({ open, onOpenChange }: ExportDataDialogProps) 
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
         </div>

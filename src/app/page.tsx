@@ -2,17 +2,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
-import IncomeInput from '@/components/IncomeInput';
 import ExpenseList from '@/components/ExpenseList';
 import Dashboard from '@/components/Dashboard';
-import YearSelector from '@/components/YearSelector';
-import SearchAndFilterPanel, { FilterState } from '@/components/SearchAndFilterPanel';
-import SearchResultsDisplay from '@/components/SearchResultsDisplay';
 import { GoalsSection } from '@/components/GoalsSection';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { QuickAddExpenseFAB } from '@/components/QuickAddExpenseFAB';
 import { toast } from '@/lib/toast';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import PullToRefresh from 'react-simple-pull-to-refresh';
+import { useCallback } from 'react';
 
 interface Expense {
   id: string;
@@ -43,41 +42,21 @@ type SortKey = 'name' | 'amount';
 
 export default function Home() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [yearlyIncome, setYearlyIncome] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
-  const [filters, setFilters] = useState<FilterState>({
-    searchQuery: '',
-    dateRange: { start: '', end: '' },
-    amountRange: { min: 0, max: 100000 },
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const abortController = new AbortController();
-    
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       setIsLoading(true);
       setError(null);
       
       try {
-        const incomeRes = await fetch(`/api/income?year=${selectedYear}`, {
-          signal: abortController.signal,
-        });
-        
-        if (!incomeRes.ok) {
-          throw new Error('Failed to fetch income data');
-        }
-        
-        const incomeData = await incomeRes.json();
-        setYearlyIncome(Number(incomeData.value));
-
         // Fetch yearly, monthly, and fixed expenses for the selected year
         const [yearlyRes, monthlyRes, fixedRes] = await Promise.all([
-          fetch(`/api/expenses?year=${selectedYear}`, { signal: abortController.signal }),
-          fetch(`/api/expenses/monthly?year=${selectedYear}`, { signal: abortController.signal }),
-          fetch(`/api/fixed-expenses?year=${selectedYear}`, { signal: abortController.signal })
+          fetch(`/api/expenses?year=${selectedYear}`),
+          fetch(`/api/expenses/monthly?year=${selectedYear}`),
+          fetch(`/api/fixed-expenses?year=${selectedYear}`)
         ]);
         
         if (!yearlyRes.ok || !monthlyRes.ok || !fixedRes.ok) {
@@ -116,63 +95,16 @@ export default function Home() {
           toast.error(errorMessage);
         }
       } finally {
-        if (!abortController.signal.aborted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    };
-    
-    fetchData();
-    
-    // Reset filters when year changes
-    setFilters({
-      searchQuery: '',
-      dateRange: { start: '', end: '' },
-      amountRange: { min: 0, max: 100000 },
-    });
-    
-    // Cleanup: abort fetch on unmount or year change
-    return () => {
-      abortController.abort();
-    };
   }, [selectedYear]);
 
-  // Filter expenses based on search and filter criteria
-  const filteredExpenses = useMemo(() => {
-    let result = [...expenses];
-
-    // Apply search query
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      result = result.filter(exp => exp.name.toLowerCase().includes(query));
-    }
-
-    // Apply date range filter
-    if (filters.dateRange.start || filters.dateRange.end) {
-      result = result.filter(exp => {
-        if (!exp.date) return false;
-        const expDate = new Date(exp.date);
-        const startDate = filters.dateRange.start ? new Date(filters.dateRange.start) : null;
-        const endDate = filters.dateRange.end ? new Date(filters.dateRange.end) : null;
-
-        if (startDate && expDate < startDate) return false;
-        if (endDate && expDate > endDate) return false;
-        return true;
-      });
-    }
-
-    // Apply amount range filter
-    if (filters.amountRange.min > 0 || filters.amountRange.max < 100000) {
-      result = result.filter(exp => 
-        exp.amount >= filters.amountRange.min && exp.amount <= filters.amountRange.max
-      );
-    }
-
-    return result;
-  }, [expenses, filters]);
+  useEffect(() => {
+    fetchData();
+  }, [selectedYear, fetchData]);
 
   const sortedExpenses = useMemo(() => {
-    const sortableExpenses = [...filteredExpenses];
+    const sortableExpenses = [...expenses];
     if (sortConfig !== null) {
       sortableExpenses.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -185,7 +117,7 @@ export default function Home() {
       });
     }
     return sortableExpenses;
-  }, [filteredExpenses, sortConfig]);
+  }, [expenses, sortConfig]);
 
   const requestSort = (key: SortKey) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -195,53 +127,32 @@ export default function Home() {
     setSortConfig({ key, direction });
   };
 
-  const updateYearlyIncome = async (income: number) => {
-    setYearlyIncome(income);
-    await fetch('/api/income', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ income, year: selectedYear }),
-    });
-  };
-
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-  };
-
-  const hasActiveFilters = () => {
-    return (
-      filters.searchQuery !== '' ||
-      filters.dateRange.start !== '' ||
-      filters.dateRange.end !== '' ||
-      filters.amountRange.min !== 0 ||
-      filters.amountRange.max !== 100000
-    );
-  };
-
-  // Calculate max amount for slider
-  const maxAmount = useMemo(() => {
-    if (expenses.length === 0) return 100000;
-    return Math.max(...expenses.map(exp => exp.amount), 100000);
-  }, [expenses]);
-
   return (
-    <main className="min-h-screen bg-gray-100">
-      <Header />
+    <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Header selectedYear={selectedYear} onYearChange={setSelectedYear} />
       <div className="container mx-auto p-2 sm:p-4">
+
         {isLoading ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-              <p className="text-gray-600 font-medium">Loading data for {selectedYear}...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-64 w-full" />
             </div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <h3 className="text-red-800 font-semibold mb-2">Error Loading Data</h3>
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md">
+              <h3 className="text-red-800 dark:text-red-200 font-semibold mb-2">Error Loading Data</h3>
+              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
               <Button 
                 className="mt-4" 
                 onClick={() => window.location.reload()}
@@ -251,47 +162,29 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PullToRefresh onRefresh={fetchData}>
+            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-gray-200 rounded-md gap-3">
-              <h2 className="text-lg font-medium">Yearly</h2>
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
-                <YearSelector 
-                  selectedYear={selectedYear} 
-                  onYearChange={setSelectedYear} 
-                />
-                <Link href="/monthly" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto">Track Monthly</Button>
-                </Link>
-              </div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-white dark:bg-gray-800/80 border-2 border-gray-200 dark:border-white/20 rounded-lg shadow-md gap-3">
+              <h2 className="text-lg font-medium">Yearly Expenses - {selectedYear}</h2>
+              <Link href="/monthly" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">Track Monthly</Button>
+              </Link>
             </div>
-            <IncomeInput label="Yearly Income (INR)" value={yearlyIncome} onChange={updateYearlyIncome} />
+            
             <Link href="/monthly">
               <Button className="w-full mb-4">Add Expense</Button>
             </Link>
-            <SearchAndFilterPanel
-              onFilterChange={handleFilterChange}
-              initialFilters={filters}
-              year={selectedYear}
-              maxAmount={maxAmount}
+            
+            <ExpenseList
+              expenses={sortedExpenses}
+              requestSort={requestSort}
+              sortConfig={sortConfig}
             />
-            {hasActiveFilters() ? (
-              <SearchResultsDisplay
-                expenses={sortedExpenses}
-                title="Filtered Expenses"
-                showMonth={true}
-              />
-            ) : (
-              <ExpenseList
-                expenses={sortedExpenses}
-                requestSort={requestSort}
-                sortConfig={sortConfig}
-              />
-            )}
           </div>
           <div className="space-y-4">
-            <Dashboard monthlyIncome={yearlyIncome / 12} selectedYear={selectedYear} />
+            <Dashboard selectedYear={selectedYear} />
           </div>
         </div>
 
@@ -299,9 +192,12 @@ export default function Home() {
         <div className="mt-6">
           <GoalsSection />
         </div>
-        </>
+        </div>
+          </PullToRefresh>
         )}
       </div>
+      
+      <QuickAddExpenseFAB onExpenseAdded={() => window.location.reload()} />
     </main>
   );
 }

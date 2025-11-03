@@ -67,9 +67,9 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
         </DialogHeader>
         <div className="space-y-4">
           {/* Total Summary */}
-          <div className="bg-gray-100 p-4 rounded-md space-y-2">
+          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md space-y-2">
             <div>
-              <p className="text-sm text-gray-600">Net Savings</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Net Savings</p>
               <p className="text-2xl font-bold">{formatCurrency(netContributions)}</p>
             </div>
             <div className="grid grid-cols-2 gap-4 pt-2 border-t">
@@ -111,8 +111,8 @@ export const ContributionHistoryDialog: React.FC<ContributionHistoryDialogProps>
                         <span
                           className={`text-xs font-medium px-2 py-1 rounded ${
                             contribution.type === 'addition'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                           }`}
                         >
                           {contribution.type === 'addition' ? 'Added' : 'Withdrawn'}

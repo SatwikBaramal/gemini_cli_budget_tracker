@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/formatters';
-import { AlertCircle } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Expense {
   id: string;
@@ -58,12 +58,9 @@ const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   if (expenses.length === 0) {
     return (
-      <Card className="bg-yellow-50 border-yellow-200 mb-6">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-center gap-2 text-yellow-700">
-            <AlertCircle className="h-5 w-5" />
-            <p className="text-sm font-medium">No expenses match your search criteria</p>
-          </div>
+      <Card className="mb-6">
+        <CardContent className="p-0">
+          <EmptyState variant="search" />
         </CardContent>
       </Card>
     );
@@ -95,8 +92,8 @@ const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                     <TableCell>
                       <span className={`text-xs px-2 py-1 rounded ${
                         expense.month 
-                          ? 'bg-blue-100 text-blue-700' 
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}>
                         {getMonthName(expense.month)}
                       </span>

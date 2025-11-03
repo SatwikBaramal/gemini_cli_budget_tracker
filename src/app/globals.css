@@ -142,3 +142,64 @@ select,
 [data-slot="button"] {
   cursor: pointer;
 }
+
+/* Mobile-specific optimizations */
+@layer utilities {
+  /* Smooth scrolling for mobile */
+  @media (max-width: 640px) {
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    
+    body {
+      overscroll-behavior-y: contain;
+    }
+  }
+  
+  /* Touch-friendly spacing */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth drawer animations */
+  @keyframes slide-in-from-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slide-out-to-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+  
+  .animate-slide-in-from-left {
+    animation: slide-in-from-left 0.3s ease-out;
+  }
+  
+  .animate-slide-out-to-left {
+    animation: slide-out-to-left 0.3s ease-in;
+  }
+}
+
+/* Better focus states for accessibility */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

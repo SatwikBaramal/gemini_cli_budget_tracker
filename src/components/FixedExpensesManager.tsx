@@ -122,14 +122,14 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
   return (
     <Card className="mb-6">
       <CardHeader 
-        className="cursor-pointer hover:bg-gray-50 transition-colors"
+        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex justify-between items-center">
           <CardTitle className="text-xl">Manage Fixed Expenses</CardTitle>
           <div className="flex items-center gap-2">
             {!isExpanded && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {fixedExpenses.length} fixed {fixedExpenses.length === 1 ? 'expense' : 'expenses'}
               </span>
             )}
@@ -141,7 +141,7 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
       {isExpanded && (
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Add recurring expenses that automatically appear in selected months
             </p>
             <Button onClick={() => handleOpenDialog()} className="gap-2">
@@ -152,22 +152,22 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
 
           {/* List of Fixed Expenses */}
           {fixedExpenses.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               No fixed expenses yet. Add one to get started!
             </div>
           ) : (
             <div className="space-y-2">
               {fixedExpenses.map((expense) => (
-                <Card key={expense.id} className="p-4 border-l-4 border-purple-500 bg-purple-50/30">
+                <Card key={expense.id} className="p-4 border-l-4 border-purple-500 dark:border-purple-400 bg-purple-50/30 dark:bg-purple-900/20">
                   <div className="flex justify-between items-center">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">{expense.name}</span>
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">{expense.name}</span>
+                        <span className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-1 rounded">
                           Fixed
                         </span>
                       </div>
-                      <div className="flex gap-4 mt-1 text-sm text-gray-600">
+                      <div className="flex gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span>{formatCurrency(expense.amount)}</span>
                         <span>• {getMonthsText(expense.applicable_months)}</span>
                       </div>
@@ -185,7 +185,7 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => onDelete(expense.id)}
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -242,7 +242,7 @@ const FixedExpensesManager: React.FC<FixedExpensesManagerProps> = ({
                           px-3 py-2 text-sm rounded-md border transition-colors
                           ${selectedMonths.includes(month)
                             ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                           }
                         `}
                       >

@@ -143,8 +143,8 @@ export const ManageSavingsDialog: React.FC<ManageSavingsDialogProps> = ({
 
             {/* Available Balance (for withdrawals) */}
             {transactionType === 'withdrawal' && (
-              <div className="bg-blue-50 p-3 rounded-md">
-                <p className="text-sm text-blue-900">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+                <p className="text-sm text-blue-900 dark:text-blue-200">
                   <span className="font-semibold">Available to withdraw:</span>{' '}
                   {formatCurrency(currentAmount)}
                 </p>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface IncomeInputProps {
   label: string;
@@ -39,21 +40,23 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ label, value, onChange }) => 
   };
   
   return (
-    <div className="p-3 sm:p-4 border-b">
-      <Label htmlFor="income-input" className="text-base sm:text-lg font-medium">
-        {label}
-      </Label>
-      <Input
-        id="income-input"
-        type="number"
-        placeholder={`Enter your ${label.toLowerCase()}`}
-        value={value}
-        onChange={handleChange}
-        min="0"
-        max="999999999"
-        className="mt-2 text-sm sm:text-base"
-      />
-    </div>
+    <Card>
+      <CardContent className="p-3 sm:p-4">
+        <Label htmlFor="income-input" className="text-base sm:text-lg font-medium">
+          {label}
+        </Label>
+        <Input
+          id="income-input"
+          type="number"
+          placeholder={`Enter your ${label.toLowerCase()}`}
+          value={value}
+          onChange={handleChange}
+          min="0"
+          max="999999999"
+          className="mt-2 text-sm sm:text-base"
+        />
+      </CardContent>
+    </Card>
   );
 };
 

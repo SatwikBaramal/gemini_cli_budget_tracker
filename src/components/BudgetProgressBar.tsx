@@ -29,14 +29,14 @@ const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className={`h-full bg-gradient-to-r ${getProgressColor(spentPercentage)} transition-all duration-300`}
           style={{ width: `${remainingPercentage}%` }}
         />
       </div>
       {showLabels && (
-        <div className="flex justify-between mt-1 text-xs text-gray-600">
+        <div className="flex justify-between mt-1 text-xs text-gray-600 dark:text-gray-400">
           <span>{remainingPercentage.toFixed(0)}% left</span>
           <span>{spentPercentage.toFixed(0)}% spent</span>
         </div>

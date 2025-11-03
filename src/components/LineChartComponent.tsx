@@ -202,7 +202,7 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center">
-            <p className="text-gray-500">Loading chart data...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading chart data...</p>
           </div>
         </CardContent>
       </Card>
@@ -218,10 +218,10 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
               Monthly {viewMode === 'expenses' ? 'Expenses' : 'Savings'} Trend
             </CardTitle>
             <div className="flex items-baseline gap-2">
-              <span className={`text-xl sm:text-2xl font-bold ${percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-xl sm:text-2xl font-bold ${percentageChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%
               </span>
-              <span className="text-xs sm:text-sm text-gray-500">{selectedPeriod} period</span>
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{selectedPeriod} period</span>
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">

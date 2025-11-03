@@ -115,11 +115,11 @@ export const GoalCard: React.FC<GoalCardProps> = ({
             <span className="font-semibold">
               {formatCurrency(goal.currentAmount)} of {formatCurrency(goal.targetAmount)}
             </span>
-            <span className="text-gray-600">{progressPercentage.toFixed(1)}%</span>
+            <span className="text-gray-600 dark:text-gray-400">{progressPercentage.toFixed(1)}%</span>
           </div>
           
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
@@ -132,10 +132,10 @@ export const GoalCard: React.FC<GoalCardProps> = ({
 
         {/* Deadline Display */}
         <div className="text-sm">
-          <span className="text-gray-600">Deadline: </span>
+          <span className="text-gray-600 dark:text-gray-400">Deadline: </span>
           <span className="font-medium">{formatDate(goal.deadline)}</span>
           {goal.status === 'active' && daysRemaining >= 0 && (
-            <span className="ml-2 text-gray-500">({daysRemaining} days remaining)</span>
+            <span className="ml-2 text-gray-500 dark:text-gray-400">({daysRemaining} days remaining)</span>
           )}
         </div>
 

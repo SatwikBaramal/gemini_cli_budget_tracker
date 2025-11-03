@@ -55,18 +55,18 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
       <div className="w-full max-w-md px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Vivaranam</h1>
-          <p className="text-gray-600">Budget Tracker</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">Vivaranam</h1>
+          <p className="text-gray-600 dark:text-gray-400">Budget Tracker</p>
         </div>
 
         <Card className="p-8 shadow-xl">
           <h2 className="text-2xl font-semibold text-center mb-6">Sign In</h2>
           
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md mb-4 text-sm border dark:border-red-800">
               {error}
             </div>
           )}

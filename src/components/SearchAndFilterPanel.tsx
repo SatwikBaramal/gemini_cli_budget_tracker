@@ -366,7 +366,7 @@ const SearchAndFilterPanel: React.FC<SearchAndFilterPanelProps> = ({
               {presets.map((preset) => (
                 <div
                   key={preset._id}
-                  className="flex justify-between items-center p-2 sm:p-3 border rounded-md bg-gray-50 hover:bg-gray-100"
+                  className="flex justify-between items-center p-2 sm:p-3 border dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <button
                     onClick={() => handleLoadPreset(preset)}

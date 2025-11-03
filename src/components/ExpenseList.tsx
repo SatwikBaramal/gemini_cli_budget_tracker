@@ -18,7 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { ArrowUpDown } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 
 interface Expense {
   id: string;
@@ -87,12 +94,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortCo
                 <div className="flex items-center gap-2">
                   {expense.name}
                   {selectedMonth === 'all' && expense.month && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
                       {monthNames[expense.month - 1].substring(0, 3)}
                     </span>
                   )}
                   {selectedMonth === 'all' && !expense.month && (
-                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded">
                       Yearly
                     </span>
                   )}
@@ -105,8 +112,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortCo
           ))
         ) : (
           <TableRow key="empty">
-            <TableCell colSpan={2} className="text-center">
-              No expenses added yet.
+            <TableCell colSpan={2} className="p-0">
+              <EmptyState variant="expenses" />
             </TableCell>
           </TableRow>
         )}
@@ -114,15 +121,59 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortCo
     </Table>
   );
 
+  // Mobile accordion view
+  const mobileExpenseList = (
+    <Accordion type="single" collapsible className="w-full space-y-2">
+      {filteredExpenses.length > 0 ? (
+        filteredExpenses.slice(0, 10).map((expense) => (
+          <AccordionItem 
+            key={expense.id} 
+            value={expense.id}
+            className="border dark:border-gray-700 rounded-lg px-4 bg-gray-50 dark:bg-gray-800/50"
+          >
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex justify-between items-center w-full pr-2">
+                <span className="font-medium text-sm">{expense.name}</span>
+                <span className="font-bold text-sm">₹{expense.amount.toLocaleString('en-IN')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pt-2 pb-2 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+                  <span className="font-semibold">₹{expense.amount.toLocaleString('en-IN')}</span>
+                </div>
+                {expense.month && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Month:</span>
+                    <span className="font-semibold">{monthNames[expense.month - 1]}</span>
+                  </div>
+                )}
+                {!expense.month && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                    <span className="font-semibold">Yearly</span>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))
+      ) : (
+        <EmptyState variant="expenses" />
+      )}
+    </Accordion>
+  );
+
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <CardTitle>Expenses</CardTitle>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="border rounded-md px-3 py-1 text-sm"
+            className="border dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-full sm:w-auto min-h-[44px]"
           >
             <option value="all">All Expenses</option>
             <option value="yearly">Yearly Only</option>
@@ -133,9 +184,22 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, requestSort, sortCo
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="h-96 overflow-y-auto border rounded-md">
+        {/* Desktop view - Table */}
+        <div className="hidden sm:block h-96 overflow-y-auto border dark:border-gray-700 rounded-md">
           {expenseTable}
         </div>
+        
+        {/* Mobile view - Accordion */}
+        <div className="sm:hidden max-h-96 overflow-y-auto">
+          {mobileExpenseList}
+        </div>
+        
+        {filteredExpenses.length > 10 && (
+          <p className="text-sm text-gray-500 text-center sm:hidden">
+            Showing 10 of {filteredExpenses.length} expenses
+          </p>
+        )}
+        
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" className="w-full">View All Expenses</Button>

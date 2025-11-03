@@ -43,12 +43,12 @@ export function VersionNoticeDialog() {
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">Development Notice</DialogTitle>
-          <DialogDescription className="text-base pt-4 space-y-3">
-            <p>The Application is still in Development.</p>
-            <p>
+          <DialogDescription className="text-base pt-4">
+            <span className="block">The Application is still in Development.</span>
+            <span className="block mt-3">
               This is Version 0.0.6 Beta. There will be some delay in the values
               getting updated. Please be patient.
-            </p>
+            </span>
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end pt-4">

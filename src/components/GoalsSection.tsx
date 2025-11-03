@@ -8,6 +8,7 @@ import { AddGoalDialog, GoalFormData } from './AddGoalDialog';
 import { ManageSavingsDialog, TransactionData } from './ManageSavingsDialog';
 import { ContributionHistoryDialog } from './ContributionHistoryDialog';
 import { CoinLoadingAnimation } from './CoinLoadingAnimation';
+import { EmptyState } from './EmptyState';
 
 interface Goal {
   _id: string;
@@ -190,18 +191,11 @@ export const GoalsSection: React.FC = () => {
             <CoinLoadingAnimation />
           </div>
         ) : displayedGoals.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">
-              {showArchived
-                ? 'No archived goals'
-                : 'No active goals yet. Create your first savings goal!'}
-            </p>
-            {!showArchived && (
-              <Button onClick={() => setAddGoalDialogOpen(true)}>
-                Create Your First Goal
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            variant="goals"
+            onAction={!showArchived ? () => setAddGoalDialogOpen(true) : undefined}
+            actionLabel="Create Your First Goal"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displayedGoals.map((goal) => (

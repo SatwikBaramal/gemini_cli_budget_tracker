@@ -207,15 +207,15 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
                 <Card
                   key={month}
                   className={`p-4 ${
-                    hasOverride ? 'bg-green-50 border-green-500 border-l-4' : 'bg-white'
+                    hasOverride ? 'bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-400 border-l-4' : 'bg-white dark:bg-gray-800'
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{getMonthName(month)}</h4>
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">{getMonthName(month)}</h4>
                         {hasOverride && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded inline-block mt-1">
+                          <span className="text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2 py-0.5 rounded inline-block mt-1">
                             Customized
                           </span>
                         )}
@@ -299,7 +299,7 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
                               variant="ghost"
                               onClick={() => handleDeleteOverride(override.id)}
                               disabled={isSubmitting}
-                              className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -313,9 +313,9 @@ const MonthlyIncomeOverrideDialog: React.FC<MonthlyIncomeOverrideDialogProps> = 
             })}
           </div>
 
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-sm text-blue-900 mb-2">💡 Tip</h4>
-            <p className="text-xs text-blue-800">
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-200 mb-2">💡 Tip</h4>
+            <p className="text-xs text-blue-800 dark:text-blue-300">
               Use this feature when you have irregular income, bonuses, or any month-specific changes to your regular income.
               For example, if you receive a bonus in November, you can increase that month&apos;s income accordingly.
             </p>

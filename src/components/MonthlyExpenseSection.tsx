@@ -158,7 +158,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
       {/* Expense List */}
       {(expenses.length > 0 || fixedExpenses.length > 0) ? (
         <div className="space-y-2">
-          <h4 className="font-semibold text-xs sm:text-sm text-gray-700">Expenses:</h4>
+          <h4 className="font-semibold text-xs sm:text-sm text-gray-700 dark:text-gray-300">Expenses:</h4>
           <div className="space-y-1.5 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
             {/* Fixed Expenses */}
             {fixedExpenses.map((expense) => {
@@ -167,13 +167,13 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
               const isEditing = editingExpenseId === expense.id;
               
               return (
-                <Card key={`fixed-${expense.id}`} className="p-2 sm:p-3 bg-blue-50 border-l-4 border-blue-500">
+                <Card key={`fixed-${expense.id}`} className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400">
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 sm:gap-2 mb-1 flex-wrap">
-                        <Pin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
-                        <span className="font-medium text-sm sm:text-base text-gray-900 truncate">{expense.name}</span>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
+                        <Pin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{expense.name}</span>
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                           Fixed
                         </span>
                         {override && (
@@ -185,7 +185,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                       
                       {isEditing ? (
                         <div className="space-y-2">
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
                             Original: <span className="line-through">{formatCurrency(expense.amount)}</span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -226,15 +226,15 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                         <div className="flex justify-between items-center">
                           <div className="flex flex-col">
                             {override && (
-                              <span className="text-xs text-gray-500 line-through">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 line-through">
                                 Original: {formatCurrency(expense.amount)}
                               </span>
                             )}
-                            <span className="text-xs text-gray-600">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
                               {override ? 'Modified amount' : 'Recurring expense'}
                             </span>
                           </div>
-                          <span className={`font-semibold ${override ? 'text-orange-900' : 'text-blue-900'}`}>
+                          <span className={`font-semibold ${override ? 'text-orange-900 dark:text-orange-400' : 'text-blue-900 dark:text-blue-400'}`}>
                             {formatCurrency(displayAmount)}
                           </span>
                         </div>
@@ -246,7 +246,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
                           onClick={() => {
                             setEditingExpenseId(expense.id);
                             setEditAmount(displayAmount.toString());
@@ -259,7 +259,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                             onClick={() => onRevertOverride(override.id)}
                             title="Revert to original amount"
                           >
@@ -285,19 +285,19 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
 
             {/* Regular Expenses */}
             {expenses.map((expense) => (
-              <Card key={expense.id} className="p-2 sm:p-3 bg-white border border-gray-200">
+              <Card key={expense.id} className="p-2 sm:p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center gap-2">
-                      <span className="font-medium text-sm sm:text-base text-gray-900 truncate">{expense.name}</span>
-                      <span className="font-semibold text-sm sm:text-base text-gray-900 whitespace-nowrap">{formatCurrency(expense.amount)}</span>
+                      <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{expense.name}</span>
+                      <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 whitespace-nowrap">{formatCurrency(expense.amount)}</span>
                     </div>
-                    <span className="text-xs text-gray-500">{formatDateTime(expense.date)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(expense.date)}</span>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                    className="h-7 w-7 sm:h-8 sm:w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
                     onClick={() => onDeleteExpense(monthNumber, expense.id)}
                   >
                     <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -308,11 +308,11 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-gray-500 italic">No expenses added yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 italic">No expenses added yet.</p>
       )}
 
       {/* Summary */}
-      <div className="pt-3 border-t border-gray-200">
+      <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
         {isIncomeOverridden && baseMonthlyIncome && (
           <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded">
             <div className="flex items-center justify-between text-sm">
@@ -331,24 +331,24 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
           </div>
         )}
         {fixedExpenses.length > 0 && (
-          <div className="flex justify-between items-center text-sm text-blue-700 mb-1">
+          <div className="flex justify-between items-center text-sm text-blue-700 dark:text-blue-400 mb-1">
             <span className="font-medium">Fixed Expenses:</span>
             <span className="font-semibold">{formatCurrency(fixedExpensesTotal)}</span>
           </div>
         )}
         {expenses.length > 0 && (
-          <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
+          <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-1">
             <span className="font-medium">Other Expenses:</span>
             <span className="font-semibold">{formatCurrency(regularExpensesTotal)}</span>
           </div>
         )}
         <div className="flex justify-between items-center text-sm mt-2">
-          <span className="font-semibold text-gray-700">Total Spent:</span>
-          <span className="font-bold text-red-600">{formatCurrency(totalExpenses)}</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-300">Total Spent:</span>
+          <span className="font-bold text-red-600 dark:text-red-400">{formatCurrency(totalExpenses)}</span>
         </div>
         <div className="flex justify-between items-center text-sm mt-1">
-          <span className="font-semibold text-gray-700">Remaining:</span>
-          <span className={`font-bold ${remainingBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <span className="font-semibold text-gray-700 dark:text-gray-300">Remaining:</span>
+          <span className={`font-bold ${remainingBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             {formatCurrency(remainingBalance)}
           </span>
         </div>
