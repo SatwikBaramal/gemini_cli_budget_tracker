@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { ExportDataDialog } from './ExportDataDialog';
@@ -9,6 +10,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { SettingsDialog } from './SettingsDialog';
 import { SearchDialog } from './SearchDialog';
 import { ChatbotDialog } from './ChatbotDialog';
+import { DeleteAccountDialog } from './DeleteAccountDialog';
+import { toast } from 'sonner';
 
 interface HeaderProps {
   selectedYear: number;
@@ -19,9 +22,37 @@ const Header: React.FC<HeaderProps> = ({ selectedYear, onYearChange }) => {
   const { data: session } = useSession();
   const [showMenu, setShowMenu] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/sign-in' });
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch('/api/user', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      const data = await response.json();
+      
+      // Close the dialog and menu
+      setShowDeleteDialog(false);
+      setShowMenu(false);
+      
+      // Show success message
+      toast.success('Account deleted successfully');
+      
+      // Sign out and redirect to sign-in page
+      await signOut({ callbackUrl: '/sign-in' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account. Please try again.');
+    }
   };
 
   const getInitials = (name?: string | null) => {
@@ -36,7 +67,9 @@ const Header: React.FC<HeaderProps> = ({ selectedYear, onYearChange }) => {
 
   return (
     <header className="bg-gray-800 dark:bg-gray-900 text-white py-2 px-2 md:p-4 md:px-8 flex justify-between items-center">
-      <p className="text-lg sm:text-2xl md:text-3xl font-bold">Vivaranam</p>
+      <Link href="/" className="text-lg sm:text-2xl md:text-3xl font-bold hover:text-gray-300 transition-colors cursor-pointer">
+        Vivaranam
+      </Link>
       <div className="flex items-center gap-1 sm:gap-2 md:gap-6 relative">
         {session?.user ? (
           <>
@@ -78,6 +111,15 @@ const Header: React.FC<HeaderProps> = ({ selectedYear, onYearChange }) => {
                   </div>
                   <ThemeToggle />
                   <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowDeleteDialog(true);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 border-t border-gray-200 dark:border-gray-700"
+                  >
+                    Delete Account
+                  </button>
+                  <button
                     onClick={handleSignOut}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400"
                   >
@@ -90,6 +132,12 @@ const Header: React.FC<HeaderProps> = ({ selectedYear, onYearChange }) => {
             <ExportDataDialog
               open={showExportDialog}
               onOpenChange={setShowExportDialog}
+            />
+
+            <DeleteAccountDialog
+              open={showDeleteDialog}
+              onOpenChange={setShowDeleteDialog}
+              onConfirmDelete={handleDeleteAccount}
             />
           </>
         ) : (

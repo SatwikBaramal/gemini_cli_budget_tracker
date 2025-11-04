@@ -11,9 +11,15 @@ const isDatabaseAvailable = () => {
   return !!process.env.MONGODB_URI;
 };
 
+// Validate required environment variables
+if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
+  console.error('WARNING: AUTH_SECRET or NEXTAUTH_SECRET is not defined in .env.local');
+}
+
 // Full config with providers (for API routes, not Edge runtime)
 const fullAuthConfig: NextAuthConfig = {
   ...authConfig,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     // Only include Google provider if credentials are available
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET

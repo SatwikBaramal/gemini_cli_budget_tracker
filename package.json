@@ -11,7 +11,8 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint",
     "re-encrypt": "tsx scripts/re-encrypt-data.ts",
-    "clear-user-data": "tsx scripts/clear-user-data.ts"
+    "clear-user-data": "tsx scripts/clear-user-data.ts",
+    "populate-data": "tsx scripts/populate-user-data.ts"
   },
   "dependencies": {
     "@google/gemini-cli-core": "^0.5.4",
