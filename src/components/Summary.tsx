@@ -311,7 +311,7 @@ export function Summary() {
       <CardContent ref={chatContainerRef} className="flex-grow overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
           <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+            <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`}>
               <div className="text-sm prose">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {msg.content}
@@ -322,7 +322,7 @@ export function Summary() {
         ))}
         {shouldShowLoading && displayedContent.length === 0 && (
           <div className="flex items-end gap-2 justify-start">
-            <div className="max-w-xs p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <div className="max-w-xs p-3 rounded-lg bg-gray-200 text-gray-900">
               <CoinLoadingAnimation />
             </div>
           </div>

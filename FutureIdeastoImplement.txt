@@ -1,0 +1,10 @@
+1.Hidden Expenses Category-
+>Opens only when users enters a preset password
+>Can Hide any number of Expenses
+>Show up as "Expense"(without cost) in other tables where expenses are displayed
+
+
+2.A Proper Analytics Page
+>Show multiple graphs, differnt metrics for comparison
+>Highly Customizable
+

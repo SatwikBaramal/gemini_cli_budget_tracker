@@ -37,8 +37,6 @@ const Header: React.FC<HeaderProps> = ({ selectedYear, onYearChange }) => {
       if (!response.ok) {
         throw new Error('Failed to delete account');
       }
-
-      const data = await response.json();
       
       // Close the dialog and menu
       setShowDeleteDialog(false);

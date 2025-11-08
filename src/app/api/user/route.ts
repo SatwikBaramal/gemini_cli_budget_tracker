@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/lib/models/User';
@@ -10,7 +10,7 @@ import { Setting } from '@/lib/models/Setting';
 import { FilterPreset } from '@/lib/models/FilterPreset';
 import { MonthlyIncomeOverride } from '@/lib/models/MonthlyIncomeOverride';
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
     // Authenticate the user
     const session = await auth();

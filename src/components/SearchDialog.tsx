@@ -155,8 +155,10 @@ export function SearchDialog({ selectedYear }: SearchDialogProps) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const timer = debounceTimerRef.current;
+      if (timer) {
+        clearTimeout(timer);
       }
     };
   }, []);
