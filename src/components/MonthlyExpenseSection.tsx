@@ -177,7 +177,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                           Fixed
                         </span>
                         {override && (
-                          <span className="text-xs bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
+                          <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 px-1.5 sm:px-2 py-0.5 rounded whitespace-nowrap">
                             Modified
                           </span>
                         )}
@@ -269,7 +269,7 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 sm:h-8 sm:w-8 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-orange-500 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                             onClick={() => onUnapplyFixedExpense(expense.id, monthNumber)}
                             title="Remove from this month only"
                           >
@@ -314,17 +314,17 @@ const MonthlyExpenseSection: React.FC<MonthlyExpenseSectionProps> = ({
       {/* Summary */}
       <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
         {isIncomeOverridden && baseMonthlyIncome && (
-          <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded">
+          <div className="mb-3 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                <span className="text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2 py-0.5 rounded font-medium">
                   Custom Income
                 </span>
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-300">
                   Base: <span className="line-through">{formatCurrency(baseMonthlyIncome)}</span>
                 </span>
               </div>
-              <span className="font-semibold text-green-700">
+              <span className="font-semibold text-green-700 dark:text-green-400">
                 This Month: {formatCurrency(monthlyIncome)}
               </span>
             </div>

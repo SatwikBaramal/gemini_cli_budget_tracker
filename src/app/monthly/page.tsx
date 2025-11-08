@@ -440,7 +440,7 @@ export default function Monthly() {
         ) : (
           <>
             {/* All Months View */}
-            <div className="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-between items-center mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
               <h2 className="text-xl font-bold">All Months</h2>
               <Button onClick={() => setViewMode('current')}>
                 Back to Current Month View
@@ -460,7 +460,7 @@ export default function Monthly() {
             </div>
 
             {/* Monthly Accordions */}
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
               <Accordion type="single" collapsible className="w-full">
                 {MONTHS.map((monthNumber) => {
                   const monthName = getMonthName(monthNumber);
@@ -471,15 +471,15 @@ export default function Monthly() {
 
                   return (
                     <AccordionItem key={monthNumber} value={`month-${monthNumber}`}>
-                      <AccordionTrigger className="px-6 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <AccordionTrigger className="px-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                         <div className="flex justify-between items-center w-full pr-4">
                           <span className="font-semibold text-lg">{monthName}</span>
                           <div className="flex gap-4 text-sm">
-                            <span className="text-gray-600">
-                              Spent: <span className="font-semibold text-red-600">{formatCurrency(totalSpent)}</span>
+                            <span className="text-gray-600 dark:text-gray-300">
+                              Spent: <span className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(totalSpent)}</span>
                             </span>
-                            <span className="text-gray-600">
-                              Remaining: <span className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(remaining)}</span>
+                            <span className="text-gray-600 dark:text-gray-300">
+                              Remaining: <span className={`font-semibold ${remaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatCurrency(remaining)}</span>
                             </span>
                           </div>
                         </div>
