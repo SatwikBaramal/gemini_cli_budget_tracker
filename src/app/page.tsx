@@ -10,8 +10,8 @@ import Link from 'next/link';
 import { QuickAddExpenseFAB } from '@/components/QuickAddExpenseFAB';
 import { toast } from '@/lib/toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import PullToRefresh from 'react-simple-pull-to-refresh';
 import { useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface Expense {
   id: string;
@@ -46,9 +46,14 @@ export default function Home() {
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-      setIsLoading(true);
+  const fetchData = useCallback(async (isManualRefresh = false) => {
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
       
       try {
@@ -96,6 +101,7 @@ export default function Home() {
         }
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
       }
   }, [selectedYear]);
 
@@ -162,15 +168,26 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <PullToRefresh onRefresh={fetchData}>
-            <div>
+          <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-white dark:bg-gray-800/80 border-2 border-gray-200 dark:border-white/20 rounded-lg shadow-md gap-3">
               <h2 className="text-lg font-medium">Yearly Expenses - {selectedYear}</h2>
-              <Link href="/monthly" className="w-full sm:w-auto">
-                <Button className="w-full sm:w-auto">Track Monthly</Button>
-              </Link>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => fetchData(true)}
+                  disabled={isRefreshing}
+                  className="shrink-0"
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+                <Link href="/monthly" className="flex-1 sm:flex-initial">
+                  <Button className="w-full sm:w-auto">Track Monthly</Button>
+                </Link>
+              </div>
             </div>
             
             <Link href="/monthly">
@@ -193,7 +210,6 @@ export default function Home() {
           <GoalsSection />
         </div>
         </div>
-          </PullToRefresh>
         )}
       </div>
       

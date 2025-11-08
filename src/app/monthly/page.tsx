@@ -15,8 +15,8 @@ import { getMonthName, formatCurrency } from '@/lib/formatters';
 import { toast } from '@/lib/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { QuickAddExpenseFAB } from '@/components/QuickAddExpenseFAB';
-import PullToRefresh from 'react-simple-pull-to-refresh';
 import { useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface Expense {
   id: string;
@@ -74,9 +74,14 @@ export default function Monthly() {
   const [viewMode, setViewMode] = useState<'current' | 'all'>('current');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-      setIsLoading(true);
+  const fetchData = useCallback(async (isManualRefresh = false) => {
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
       
       try {
@@ -142,6 +147,7 @@ export default function Monthly() {
         }
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
       }
   }, [selectedYear]);
 
@@ -320,8 +326,7 @@ export default function Monthly() {
             </div>
           </div>
         ) : (
-          <PullToRefresh onRefresh={fetchData}>
-            <div>
+          <div>
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg shadow mb-6 gap-3">
           <div>
@@ -331,6 +336,16 @@ export default function Monthly() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => fetchData(true)}
+              disabled={isRefreshing}
+              className="shrink-0"
+              title="Refresh data"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <Link href="/" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto">Track Yearly</Button>
             </Link>
@@ -508,7 +523,6 @@ export default function Monthly() {
           </>
         )}
             </div>
-          </PullToRefresh>
         )}
       </div>
       
