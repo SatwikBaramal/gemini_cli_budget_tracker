@@ -207,7 +207,7 @@ export default function Monthly() {
 
   // Fixed Expenses Handlers
   const handleAddFixedExpense = async (expense: { name: string; amount: number; applicable_months: number[] }) => {
-    const response = await fetch('/api/fixed-expenses?year=${selectedYear}', {
+    const response = await fetch(`/api/fixed-expenses?year=${selectedYear}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -256,7 +256,7 @@ export default function Monthly() {
 
   // Override Handlers
   const handleOverrideFixedExpense = async (fixedExpenseId: string, month: number, overrideAmount: number) => {
-    const response = await fetch('/api/fixed-expenses/overrides?year=${selectedYear}', {
+    const response = await fetch(`/api/fixed-expenses/overrides?year=${selectedYear}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
