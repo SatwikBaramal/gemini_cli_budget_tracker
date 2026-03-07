@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { FixedExpense } from '@/lib/models/FixedExpense';
 import { FixedExpenseOverride } from '@/lib/models/FixedExpenseOverride';
 import { validateExpenseName, validateAmount, validateMonthArray, validateYear } from '@/lib/validation';
+import { encrypt } from '@/lib/encryption';
 
 export async function PUT(
   request: NextRequest,
@@ -48,9 +49,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Fixed expense not found' }, { status: 404 });
     }
 
+    const encryptedAmount = encrypt(String(amount));
+
     await FixedExpense.findByIdAndUpdate(id, {
       name,
-      amount,
+      amount: encryptedAmount,
       applicableMonths: applicable_months,
       year: yearToUse
     });
@@ -58,7 +61,7 @@ export async function PUT(
     return NextResponse.json({ 
       id, 
       name, 
-      amount, 
+      amount: Number(amount), 
       applicable_months,
       year: yearToUse
     });

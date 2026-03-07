@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import { MonthlyIncomeOverride } from '@/lib/models/MonthlyIncomeOverride';
+import { decrypt } from '@/lib/encryption';
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function GET(
       id: override._id,
       month: override.month,
       year: override.year,
-      override_amount: override.overrideAmount,
+      override_amount: Number(decrypt(override.overrideAmount)),
       date: override.date,
     });
   } catch (error) {
@@ -71,7 +72,7 @@ export async function DELETE(
         id: override._id,
         month: override.month,
         year: override.year,
-        override_amount: override.overrideAmount,
+        override_amount: Number(decrypt(override.overrideAmount)),
         date: override.date,
       }))
     });
