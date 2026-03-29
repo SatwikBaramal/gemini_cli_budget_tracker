@@ -1,0 +1,7 @@
+[build]
+  command = "npm ci --maxsockets 1 && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18.20.0"
+  NODE_OPTIONS = "--max-old-space-size=4096"
